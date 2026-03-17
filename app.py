@@ -19,6 +19,27 @@ DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "tuna.db"
 def get_db():
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
+    con.executescript("""
+        CREATE TABLE IF NOT EXISTS elementos (
+            id   INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT UNIQUE NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS eventos (
+            id     INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome   TEXT NOT NULL,
+            opcoes TEXT NOT NULL,
+            criado TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS respostas (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            evento_id   INTEGER NOT NULL,
+            elemento_id INTEGER NOT NULL,
+            opcao       TEXT NOT NULL,
+            UNIQUE(evento_id, elemento_id),
+            FOREIGN KEY(evento_id)   REFERENCES eventos(id),
+            FOREIGN KEY(elemento_id) REFERENCES elementos(id)
+        );
+    """)
     return con
 
 def init_db():
