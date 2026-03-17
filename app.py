@@ -10,13 +10,11 @@ import io
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "tuna-secret-key-muda-isto")
 
-PASSWORD = os.environ.get("APP_PASSWORD", "pastorDesertuna")
+PASSWORD = os.environ.get("APP_PASSWORD", "tuna2025")
 DB = os.path.join(os.path.dirname(__file__), "tuna.db")
 
-with app.app_context():
-    init_db()
-
 # ── Base de dados ─────────────────────────────────────────────────────────────
+
 
 def get_db():
     con = sqlite3.connect(DB)
@@ -250,4 +248,3 @@ def tabela(eid):
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)
-    
