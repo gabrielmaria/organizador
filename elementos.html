@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Membros — Tuna{% endblock %}
+{% block content %}
+<h1>Membros da tuna</h1>
+<div class="card" style="margin-bottom:1rem">
+  <form method="post" action="{{ url_for('add_elemento') }}" class="row">
+    <input type="text" name="nome" placeholder="Nome do membro..." style="flex:1;width:auto">
+    <button class="btn btn-primary">Adicionar</button>
+  </form>
+</div>
+<div class="card">
+  {% if elementos %}
+  <table>
+    <thead><tr><th>Nome</th><th></th></tr></thead>
+    <tbody>
+    {% for e in elementos %}
+    <tr>
+      <td>{{ e.nome }}</td>
+      <td style="text-align:right">
+        <form method="post" action="{{ url_for('del_elemento', eid=e.id) }}" style="display:inline" onsubmit="return confirm('Remover {{ e.nome }}?')">
+          <button class="btn btn-sm btn-danger">Remover</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:#888780;text-align:center;padding:2rem">Nenhum membro ainda.</p>
+  {% endif %}
+</div>
+{% endblock %}

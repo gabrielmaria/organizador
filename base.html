@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Tuna{% endblock %}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f4f0;color:#1a1a18;font-size:15px;line-height:1.6}
+a{color:#185fa5;text-decoration:none}
+a:hover{text-decoration:underline}
+nav{background:#fff;border-bottom:1px solid #e0dfd8;padding:0 1rem;display:flex;align-items:center;gap:1rem;height:52px}
+nav .brand{font-weight:600;font-size:16px;color:#1a1a18;margin-right:auto}
+nav a{font-size:14px;color:#5f5e5a;padding:6px 10px;border-radius:6px}
+nav a:hover{background:#f1efe8;text-decoration:none;color:#1a1a18}
+.container{max-width:860px;margin:0 auto;padding:1.5rem 1rem}
+.card{background:#fff;border:1px solid #e0dfd8;border-radius:12px;padding:1.25rem}
+.card+.card{margin-top:1rem}
+h1{font-size:20px;font-weight:600;margin-bottom:1rem}
+h2{font-size:16px;font-weight:600;margin-bottom:.75rem}
+label{font-size:13px;color:#5f5e5a;display:block;margin-bottom:3px}
+input[type=text],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid #d3d1c7;border-radius:7px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a18}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#185fa5}
+textarea{min-height:90px;resize:vertical}
+.btn{display:inline-block;padding:7px 16px;border-radius:7px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid #d3d1c7;background:#fff;color:#1a1a18;transition:.15s}
+.btn:hover{background:#f1efe8}
+.btn-primary{background:#185fa5;color:#fff;border-color:#185fa5}
+.btn-primary:hover{background:#0c447c}
+.btn-danger{background:#fff;color:#a32d2d;border-color:#f09595}
+.btn-danger:hover{background:#fcebeb}
+.btn-sm{padding:4px 10px;font-size:12px}
+.flash{background:#faeeda;border:1px solid #fac775;border-radius:7px;padding:8px 12px;margin-bottom:1rem;font-size:14px;color:#633806}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:12px;font-weight:600;color:#5f5e5a;text-align:left;padding:8px 10px;border-bottom:1px solid #e0dfd8;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #f1efe8;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-sim{background:#eaf3de;color:#27500a}
+.badge-nao{background:#fcebeb;color:#791f1f}
+.badge-talvez{background:#faeeda;color:#633806}
+.badge-carro{background:#e6f1fb;color:#0c447c}
+.badge-none{background:#f1efe8;color:#888780}
+.row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+@media(max-width:600px){.hide-mobile{display:none}}
+</style>
+</head>
+<body>
+{% if session.auth %}
+<nav>
+  <span class="brand">🎵 Tuna</span>
+  <a href="{{ url_for('index') }}">Eventos</a>
+  <a href="{{ url_for('elementos') }}">Membros</a>
+  <a href="{{ url_for('logout') }}">Sair</a>
+</nav>
+{% endif %}
+<div class="container">
+{% for msg in get_flashed_messages() %}
+<div class="flash">{{ msg }}</div>
+{% endfor %}
+{% block content %}{% endblock %}
+</div>
+</body>
+</html>

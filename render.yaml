@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: tuna-disponibilidades
+    runtime: docker
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_PASSWORD
+        value: tuna2025
+    disk:
+      name: tuna-data
+      mountPath: /data
+      sizeGB: 1

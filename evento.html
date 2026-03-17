@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}{{ ev.nome }} — Tuna{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1rem">
+  <div>
+    <h1 style="margin:0">{{ ev.nome }}</h1>
+    <div style="font-size:13px;color:#888780">{{ ev.criado }}</div>
+  </div>
+  <div class="spacer"></div>
+  <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-primary btn-sm">Ver tabela</a>
+  <a href="{{ url_for('index') }}" class="btn btn-sm">← Voltar</a>
+</div>
+
+<!-- OCR Upload -->
+<div class="card" style="margin-bottom:1rem">
+  <h2>📸 Carregar screenshot do WhatsApp</h2>
+  <p style="font-size:13px;color:#5f5e5a;margin-bottom:.75rem">
+    Tira screenshot do ecrã "View votes" de cada opção e faz upload aqui. A app tenta detetar os nomes automaticamente.
+  </p>
+
+  <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.75rem">
+    <div style="flex:1;min-width:200px">
+      <label>Opção a que corresponde este screenshot</label>
+      <select id="ocr-opcao">
+        {% for op in opcoes %}
+        <option>{{ op }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex:1;min-width:200px">
+      <label>Screenshot (imagem)</label>
+      <input type="file" id="ocr-file" accept="image/*" style="padding:6px 0;border:none">
+    </div>
+    <button class="btn btn-primary" onclick="processarOCR()">Processar</button>
+  </div>
+
+  <!-- Resultado OCR -->
+  <div id="ocr-result" style="display:none">
+    <div style="font-size:13px;font-weight:600;margin-bottom:.5rem">Nomes detetados — confirma quais estão corretos:</div>
+    <div id="ocr-matches"></div>
+    <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="confirmarOCR()">Guardar selecionados</button>
+      <button class="btn btn-sm" onclick="document.getElementById('ocr-result').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+  <div id="ocr-msg" style="font-size:13px;color:#5f5e5a;margin-top:.5rem"></div>
+</div>
+
+<!-- Registo manual -->
+<div class="card">
+  <h2>✏️ Registar manualmente</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Membro</th>
+        <th>Resposta</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for elem in elementos %}
+    <tr>
+      <td style="font-weight:500">{{ elem.nome }}</td>
+      <td>
+        {% set resp = resp_map.get(elem.id, '') %}
+        {% if resp %}
+          <span class="badge badge-{{ resp | lower | replace(' ','') | replace('ã','a') | replace('ê','e') }}">{{ resp }}</span>
+        {% else %}
+          <span class="badge badge-none">—</span>
+        {% endif %}
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('set_resposta', eid=ev.id) }}" class="row" style="gap:.4rem">
+          <input type="hidden" name="elemento_id" value="{{ elem.id }}">
+          <select name="opcao" style="width:auto;font-size:13px;padding:4px 8px">
+            <option value="">—</option>
+            {% for op in opcoes %}
+            <option value="{{ op }}" {% if resp_map.get(elem.id) == op %}selected{% endif %}>{{ op }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-sm btn-primary">Guardar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+let ocrData = null;
+
+async function processarOCR() {
+  const file = document.getElementById('ocr-file').files[0];
+  const opcao = document.getElementById('ocr-opcao').value;
+  const msg = document.getElementById('ocr-msg');
+
+  if (!file) { msg.textContent = 'Escolhe um ficheiro primeiro.'; return; }
+  msg.textContent = 'A processar...';
+
+  const fd = new FormData();
+  fd.append('screenshot', file);
+
+  const res = await fetch('/eventos/{{ ev.id }}/ocr', { method:'POST', body: fd });
+  const data = await res.json();
+  ocrData = { ...data, opcao };
+
+  msg.textContent = '';
+
+  if (!data.matches || data.matches.length === 0) {
+    msg.textContent = 'Nenhum nome reconhecido. Tenta registar manualmente.';
+    document.getElementById('ocr-result').style.display = 'none';
+    return;
+  }
+
+  const matchDiv = document.getElementById('ocr-matches');
+  matchDiv.innerHTML = data.matches.map(m => `
+    <label style="display:flex;align-items:center;gap:.5rem;padding:5px 0;font-size:14px;cursor:pointer">
+      <input type="checkbox" value="${m.id}" checked style="width:auto">
+      <strong>${m.nome}</strong>
+      <span style="color:#888780;font-size:12px">(linha OCR: "${m.linha}")</span>
+    </label>
+  `).join('');
+
+  document.getElementById('ocr-result').style.display = 'block';
+}
+
+async function confirmarOCR() {
+  if (!ocrData) return;
+  const checks = document.querySelectorAll('#ocr-matches input[type=checkbox]:checked');
+  const ids = Array.from(checks).map(c => parseInt(c.value));
+  if (!ids.length) return;
+
+  const res = await fetch('/eventos/{{ ev.id }}/ocr/confirmar', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ opcao: ocrData.opcao, elemento_ids: ids })
+  });
+  const data = await res.json();
+  if (data.ok) location.reload();
+}
+</script>
+{% endblock %}
