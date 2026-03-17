@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "tuna-secret-key-muda-isto")
 
 PASSWORD = os.environ.get("APP_PASSWORD", "tuna2025")
-DB = os.path.join(os.path.dirname(__file__), "tuna.db")
+DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "tuna.db"))
 
 # ── Base de dados ─────────────────────────────────────────────────────────────
 
