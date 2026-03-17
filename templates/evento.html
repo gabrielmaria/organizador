@@ -1,144 +1,162 @@
 {% extends "base.html" %}
-{% block title %}{{ ev.nome }} — Tuna{% endblock %}
+{% block title %}{{ ev.nome }}{% endblock %}
+{% block head %}
+<style>
+.opcao-section{margin-bottom:1.5rem}
+.opcao-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.opcao-pill{display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:15px;font-weight:600}
+.opcao-count{font-size:13px;color:var(--text2)}
+
+/* Grid de membros clicáveis */
+.membros-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.5rem}
+.membro-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-radius:var(--radius);
+  border:2px solid var(--border);background:var(--card);
+  font-size:14px;font-weight:500;color:var(--text);
+  cursor:pointer;transition:.15s;text-align:left;
+  -webkit-tap-highlight-color:transparent;width:100%
+}
+.membro-btn:hover{border-color:var(--border2);background:var(--bg)}
+.membro-btn:active{transform:scale(.96)}
+.membro-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:.15s}
+
+/* Estados selecionados */
+.membro-btn.sel-sim{border-color:var(--green-border);background:var(--green-bg);color:var(--green)}
+.membro-btn.sel-sim .dot{background:var(--green-border)}
+.membro-btn.sel-nao{border-color:var(--red-border);background:var(--red-bg);color:var(--red)}
+.membro-btn.sel-nao .dot{background:var(--red-border)}
+.membro-btn.sel-talvez{border-color:var(--amber-border);background:var(--amber-bg);color:var(--amber)}
+.membro-btn.sel-talvez .dot{background:var(--amber-border)}
+
+.save-bar{
+  position:sticky;bottom:1rem;
+  background:var(--blue);color:#fff;
+  border-radius:var(--radius-lg);padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-weight:600;font-size:15px;
+  box-shadow:0 4px 16px rgba(24,95,165,.3);
+  cursor:pointer;transition:.15s;border:none;width:100%;
+  margin-top:1rem
+}
+.save-bar:hover{background:#0c447c}
+.save-bar:active{transform:scale(.98)}
+.save-bar.hidden{display:none}
+
+.instrucao{background:var(--blue-bg);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#0c447c;margin-bottom:1rem;line-height:1.5}
+</style>
+{% endblock %}
 {% block content %}
 
 <div class="row" style="margin-bottom:1rem">
   <div>
-    <h1 style="margin:0">{{ ev.nome }}</h1>
-    <div style="font-size:13px;color:#888780">{{ ev.criado }}</div>
+    <h1 style="font-size:18px;font-weight:700">{{ ev.nome }}</h1>
+    <span class="muted">{{ ev.criado }}</span>
   </div>
   <div class="spacer"></div>
-  <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-primary btn-sm">Ver tabela</a>
-  <a href="{{ url_for('index') }}" class="btn btn-sm">← Voltar</a>
+  <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Ver tabela</a>
 </div>
 
-<!-- OCR Upload -->
-<div class="card" style="margin-bottom:1rem">
-  <h2>📸 Carregar screenshot do WhatsApp</h2>
-  <p style="font-size:13px;color:#5f5e5a;margin-bottom:.75rem">
-    Tira screenshot do ecrã "View votes" de cada opção e faz upload aqui. A app tenta detetar os nomes automaticamente.
-  </p>
-
-  <div style="display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.75rem">
-    <div style="flex:1;min-width:200px">
-      <label>Opção a que corresponde este screenshot</label>
-      <select id="ocr-opcao">
-        {% for op in opcoes %}
-        <option>{{ op }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div style="flex:1;min-width:200px">
-      <label>Screenshot (imagem)</label>
-      <input type="file" id="ocr-file" accept="image/*" style="padding:6px 0;border:none">
-    </div>
-    <button class="btn btn-primary" onclick="processarOCR()">Processar</button>
-  </div>
-
-  <!-- Resultado OCR -->
-  <div id="ocr-result" style="display:none">
-    <div style="font-size:13px;font-weight:600;margin-bottom:.5rem">Nomes detetados — confirma quais estão corretos:</div>
-    <div id="ocr-matches"></div>
-    <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
-      <button class="btn btn-primary btn-sm" onclick="confirmarOCR()">Guardar selecionados</button>
-      <button class="btn btn-sm" onclick="document.getElementById('ocr-result').style.display='none'">Cancelar</button>
-    </div>
-  </div>
-  <div id="ocr-msg" style="font-size:13px;color:#5f5e5a;margin-top:.5rem"></div>
+<div class="instrucao">
+  Abre a poll no WhatsApp → clica <strong>View votes</strong> → seleciona uma opção → clica nos nomes que aparecem aqui em baixo.
 </div>
 
-<!-- Registo manual -->
-<div class="card">
-  <h2>✏️ Registar manualmente</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Membro</th>
-        <th>Resposta</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
+{% for op in opcoes %}
+<div class="card opcao-section">
+  <div class="opcao-header">
+    <span class="opcao-pill badge-{{ op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') }}">{{ op }}</span>
+    <span class="opcao-count" id="count-{{ loop.index }}">
+      {{ resp_map.values() | selectattr('__eq__', 'equalto', op) | list | length }} selecionados
+    </span>
+  </div>
+  <div class="membros-grid">
     {% for elem in elementos %}
-    <tr>
-      <td style="font-weight:500">{{ elem.nome }}</td>
-      <td>
-        {% set resp = resp_map.get(elem.id, '') %}
-        {% if resp %}
-          <span class="badge badge-{{ resp | lower | replace(' ','') | replace('ã','a') | replace('ê','e') }}">{{ resp }}</span>
-        {% else %}
-          <span class="badge badge-none">—</span>
-        {% endif %}
-      </td>
-      <td>
-        <form method="post" action="{{ url_for('set_resposta', eid=ev.id) }}" class="row" style="gap:.4rem">
-          <input type="hidden" name="elemento_id" value="{{ elem.id }}">
-          <select name="opcao" style="width:auto;font-size:13px;padding:4px 8px">
-            <option value="">—</option>
-            {% for op in opcoes %}
-            <option value="{{ op }}" {% if resp_map.get(elem.id) == op %}selected{% endif %}>{{ op }}</option>
-            {% endfor %}
-          </select>
-          <button class="btn btn-sm btn-primary">Guardar</button>
-        </form>
-      </td>
-    </tr>
+    {% set resp = resp_map.get(elem.id, '') %}
+    {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+    <button
+      class="membro-btn {% if resp == op %}sel-{{ slug }}{% endif %}"
+      data-elem="{{ elem.id }}"
+      data-opcao="{{ op }}"
+      data-slug="{{ slug }}"
+      onclick="toggleMembro(this)">
+      <span class="dot"></span>
+      {{ elem.nome }}
+    </button>
     {% endfor %}
-    </tbody>
-  </table>
+  </div>
 </div>
+{% endfor %}
+
+<button class="save-bar" id="save-bar" onclick="guardarTudo()">
+  <span>Guardar alterações</span>
+  <span id="save-count">0 alterações</span>
+</button>
 
 <script>
-let ocrData = null;
+const alteracoes = {};
+const respostasOriginais = {
+  {% for elem in elementos %}
+  {{ elem.id }}: "{{ resp_map.get(elem.id, '') }}",
+  {% endfor %}
+};
 
-async function processarOCR() {
-  const file = document.getElementById('ocr-file').files[0];
-  const opcao = document.getElementById('ocr-opcao').value;
-  const msg = document.getElementById('ocr-msg');
-
-  if (!file) { msg.textContent = 'Escolhe um ficheiro primeiro.'; return; }
-  msg.textContent = 'A processar...';
-
-  const fd = new FormData();
-  fd.append('screenshot', file);
-
-  const res = await fetch('/eventos/{{ ev.id }}/ocr', { method:'POST', body: fd });
-  const data = await res.json();
-  ocrData = { ...data, opcao };
-
-  msg.textContent = '';
-
-  if (!data.matches || data.matches.length === 0) {
-    msg.textContent = 'Nenhum nome reconhecido. Tenta registar manualmente.';
-    document.getElementById('ocr-result').style.display = 'none';
-    return;
-  }
-
-  const matchDiv = document.getElementById('ocr-matches');
-  matchDiv.innerHTML = data.matches.map(m => `
-    <label style="display:flex;align-items:center;gap:.5rem;padding:5px 0;font-size:14px;cursor:pointer">
-      <input type="checkbox" value="${m.id}" checked style="width:auto">
-      <strong>${m.nome}</strong>
-      <span style="color:#888780;font-size:12px">(linha OCR: "${m.linha}")</span>
-    </label>
-  `).join('');
-
-  document.getElementById('ocr-result').style.display = 'block';
+function slugify(s) {
+  return s.toLowerCase().replace(/ /g,'').replace(/ã/g,'a').replace(/é/g,'e').replace(/á/g,'a').replace(/ê/g,'e').replace(/ó/g,'o').replace(/ú/g,'u').replace(/í/g,'i').replace(/ç/g,'c').replace(/ô/g,'o');
 }
 
-async function confirmarOCR() {
-  if (!ocrData) return;
-  const checks = document.querySelectorAll('#ocr-matches input[type=checkbox]:checked');
-  const ids = Array.from(checks).map(c => parseInt(c.value));
-  if (!ids.length) return;
+function toggleMembro(btn) {
+  const elemId = btn.dataset.elem;
+  const opcao = btn.dataset.opcao;
+  const slug = btn.dataset.slug;
+  const jaSelec = btn.classList.contains('sel-' + slug);
 
-  const res = await fetch('/eventos/{{ ev.id }}/ocr/confirmar', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ opcao: ocrData.opcao, elemento_ids: ids })
+  // Remover esta opção de todos os botões deste elemento
+  document.querySelectorAll(`.membro-btn[data-elem="${elemId}"]`).forEach(b => {
+    const s = b.dataset.slug;
+    b.classList.remove('sel-' + s);
   });
-  const data = await res.json();
-  if (data.ok) location.reload();
+
+  if (jaSelec) {
+    // Deselecionar — sem resposta
+    alteracoes[elemId] = '';
+  } else {
+    // Selecionar esta opção
+    btn.classList.add('sel-' + slug);
+    alteracoes[elemId] = opcao;
+  }
+
+  atualizarContadores();
+  atualizarBarra();
+}
+
+function atualizarContadores() {
+  document.querySelectorAll('.opcao-section').forEach((sec, i) => {
+    const opcao = sec.querySelector('.membro-btn').dataset.opcao;
+    const total = sec.querySelectorAll('.membro-btn[class*="sel-"]').length;
+    sec.querySelector('.opcao-count').textContent = total + ' selecionados';
+  });
+}
+
+function atualizarBarra() {
+  const n = Object.keys(alteracoes).length;
+  const bar = document.getElementById('save-bar');
+  document.getElementById('save-count').textContent = n + (n === 1 ? ' alteração' : ' alterações');
+  bar.classList.toggle('hidden', n === 0);
+}
+
+async function guardarTudo() {
+  const bar = document.getElementById('save-bar');
+  bar.textContent = 'A guardar...';
+  
+  const promises = Object.entries(alteracoes).map(([elemId, opcao]) => {
+    const fd = new FormData();
+    fd.append('elemento_id', elemId);
+    fd.append('opcao', opcao);
+    return fetch('/eventos/{{ ev.id }}/resposta', {method:'POST', body:fd});
+  });
+  
+  await Promise.all(promises);
+  location.reload();
 }
 </script>
 {% endblock %}

@@ -2,32 +2,32 @@
 {% block title %}Eventos — Tuna{% endblock %}
 {% block content %}
 <div class="row" style="margin-bottom:1.25rem">
-  <h1 style="margin:0">Eventos</h1>
+  <h1 style="font-size:20px;font-weight:700">Eventos</h1>
   <div class="spacer"></div>
-  <a href="{{ url_for('novo_evento') }}" class="btn btn-primary">+ Novo evento</a>
+  <a href="{{ url_for('novo_evento') }}" class="btn btn-primary btn-sm">+ Novo</a>
 </div>
 
 {% if eventos %}
 {% for ev in eventos %}
-<div class="card" style="margin-bottom:.75rem">
+<div class="card" style="padding:1rem">
   <div class="row">
-    <div>
-      <div style="font-weight:600;font-size:15px">{{ ev.nome }}</div>
-      <div style="font-size:12px;color:#888780;margin-top:2px">{{ ev.criado }}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.nome }}</div>
+      <div class="muted">{{ ev.criado }}</div>
     </div>
-    <div class="spacer"></div>
     <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Registar</a>
-    <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm">Tabela</a>
-    <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" style="display:inline" onsubmit="return confirm('Apagar evento e todas as respostas?')">
-      <button class="btn btn-sm btn-danger">Apagar</button>
+    <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>
+    <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Apagar este evento?')">
+      <button class="btn btn-sm btn-danger">✕</button>
     </form>
   </div>
 </div>
 {% endfor %}
 {% else %}
-<div class="card" style="text-align:center;color:#888780;padding:3rem">
+<div class="card" style="text-align:center;padding:3rem;color:var(--text2)">
+  <div style="font-size:2rem;margin-bottom:.5rem">🎵</div>
   Nenhum evento ainda.<br>
-  <a href="{{ url_for('novo_evento') }}">Cria o primeiro</a>
+  <a href="{{ url_for('novo_evento') }}" style="margin-top:.5rem;display:inline-block">Cria o primeiro</a>
 </div>
 {% endif %}
 {% endblock %}

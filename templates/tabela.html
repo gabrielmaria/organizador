@@ -3,54 +3,41 @@
 {% block content %}
 
 <div class="row" style="margin-bottom:1rem">
-  <div>
-    <h1 style="margin:0">{{ ev.nome }}</h1>
-    <div style="font-size:13px;color:#888780">{{ ev.criado }}</div>
+  <div style="flex:1;min-width:0">
+    <h1 style="font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.nome }}</h1>
+    <span class="muted">{{ ev.criado }}</span>
   </div>
-  <div class="spacer"></div>
-  <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">✏️ Editar respostas</a>
-  <a href="{{ url_for('index') }}" class="btn btn-sm">← Voltar</a>
+  <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">✏️ Editar</a>
 </div>
 
-<!-- Resumo totais -->
-<div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
+<!-- Totais -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:.5rem;margin-bottom:1rem">
   {% for op, total in totais.items() %}
-  <div class="card" style="padding:.75rem 1.25rem;text-align:center;min-width:100px">
-    <div style="font-size:22px;font-weight:600">{{ total }}</div>
-    <div style="font-size:12px;color:#5f5e5a">{{ op }}</div>
+  {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+  <div class="card" style="padding:.75rem;text-align:center;margin:0">
+    <div style="font-size:26px;font-weight:700">{{ total }}</div>
+    <div class="badge badge-{{ slug }}" style="margin-top:4px">{{ op }}</div>
   </div>
   {% endfor %}
-  <div class="card" style="padding:.75rem 1.25rem;text-align:center;min-width:100px">
-    <div style="font-size:22px;font-weight:600;color:#888780">{{ sem_resp }}</div>
-    <div style="font-size:12px;color:#888780">Sem resposta</div>
+  <div class="card" style="padding:.75rem;text-align:center;margin:0">
+    <div style="font-size:26px;font-weight:700;color:var(--text3)">{{ sem_resp }}</div>
+    <div class="muted" style="margin-top:4px">sem resposta</div>
   </div>
 </div>
 
-<!-- Tabela completa -->
-<div class="card" style="overflow-x:auto">
-  <table>
-    <thead>
-      <tr>
-        <th>Membro</th>
-        <th>Resposta</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for elem in elementos %}
-    {% set resp = resp_map.get(elem.id, '') %}
-    <tr>
-      <td style="font-weight:500">{{ elem.nome }}</td>
-      <td>
-        {% if resp %}
-          {% set slug = resp | lower | replace(' ','') | replace('ã','a') | replace('ê','e') | replace('á','a') %}
-          <span class="badge badge-{{ slug }}">{{ resp }}</span>
-        {% else %}
-          <span class="badge badge-none">—</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+<!-- Lista de membros -->
+<div class="card" style="padding:.5rem">
+  {% for elem in elementos %}
+  {% set resp = resp_map.get(elem.id, '') %}
+  {% set slug = resp | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+  <div style="display:flex;align-items:center;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
+    <span style="flex:1;font-weight:500">{{ elem.nome }}</span>
+    {% if resp %}
+    <span class="badge badge-{{ slug }}">{{ resp }}</span>
+    {% else %}
+    <span class="badge badge-none">—</span>
+    {% endif %}
+  </div>
+  {% endfor %}
 </div>
 {% endblock %}
