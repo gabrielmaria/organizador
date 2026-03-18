@@ -5,8 +5,8 @@ from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "pastorDesertuna")
-PASSWORD  = os.environ.get("APP_PASSWORD", "tuna2025")
+app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
+PASSWORD    = os.environ.get("APP_PASSWORD", "tuna2025")
 TURSO_URL   = os.environ.get("TURSO_URL", "")
 TURSO_TOKEN = os.environ.get("TURSO_TOKEN", "")
 
@@ -21,13 +21,51 @@ class DictRow(dict):
 def dict_factory(cursor, row):
     return DictRow(zip([d[0] for d in cursor.description], row))
 
+class TursoConnection:
+    """Wrapper para libsql que emula row_factory como o sqlite3."""
+    def __init__(self, con):
+        self._con = con
+
+    def execute(self, sql, params=()):
+        cursor = self._con.execute(sql, params)
+        return self._wrap_cursor(cursor)
+
+    def executescript(self, sql):
+        return self._con.executescript(sql)
+
+    def _wrap_cursor(self, cursor):
+        rows = cursor.fetchall()
+        desc = cursor.description or []
+        cols = [d[0] for d in desc]
+        lastrowid = cursor.lastrowid
+
+        class WrappedCursor:
+            def fetchall(self):
+                return [DictRow(zip(cols, row)) for row in rows]
+            def fetchone(self):
+                if rows:
+                    return DictRow(zip(cols, rows[0]))
+                return None
+            @property
+            def lastrowid(self):
+                return lastrowid
+
+        return WrappedCursor()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self._con.commit()
+
 def get_db():
     if TURSO_URL and TURSO_TOKEN:
         con = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
+        return TursoConnection(con)
     else:
         con = sqlite3.connect("tuna.db")
-    con.row_factory = dict_factory
-    return con
+        con.row_factory = dict_factory
+        return con
 
 def init_db():
     with get_db() as con:
