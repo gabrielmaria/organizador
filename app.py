@@ -11,44 +11,24 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "tuna-secret-key-muda-isto")
 
 PASSWORD = os.environ.get("APP_PASSWORD", "tuna2025")
-DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "tuna.db"))
+DB = os.path.join(os.path.dirname(__file__), "tuna.db")
 
 # ── Base de dados ─────────────────────────────────────────────────────────────
-
 
 def get_db():
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
-    con.executescript("""
-        CREATE TABLE IF NOT EXISTS elementos (
-            id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT UNIQUE NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS eventos (
-            id     INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome   TEXT NOT NULL,
-            opcoes TEXT NOT NULL,
-            criado TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS respostas (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            evento_id   INTEGER NOT NULL,
-            elemento_id INTEGER NOT NULL,
-            opcao       TEXT NOT NULL,
-            UNIQUE(evento_id, elemento_id),
-            FOREIGN KEY(evento_id)   REFERENCES eventos(id),
-            FOREIGN KEY(elemento_id) REFERENCES elementos(id)
-        );
-    """)
     return con
 
 def init_db():
     with get_db() as con:
         con.executescript("""
         CREATE TABLE IF NOT EXISTS elementos (
-            id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT UNIQUE NOT NULL
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome           TEXT UNIQUE NOT NULL,
+            nome_whatsapp  TEXT DEFAULT ''
         );
+
         CREATE TABLE IF NOT EXISTS eventos (
             id     INTEGER PRIMARY KEY AUTOINCREMENT,
             nome   TEXT NOT NULL,
@@ -112,12 +92,22 @@ def elementos():
 @login_required
 def add_elemento():
     nome = request.form.get("nome","").strip()
+    nwa  = request.form.get("nome_whatsapp","").strip()
     if nome:
         try:
             with get_db() as con:
-                con.execute("INSERT INTO elementos (nome) VALUES (?)", (nome,))
+                con.execute("INSERT INTO elementos (nome, nome_whatsapp) VALUES (?,?)", (nome, nwa))
         except sqlite3.IntegrityError:
             flash(f"'{nome}' já existe.")
+    return redirect(url_for("elementos"))
+
+
+@app.route("/elementos/edit/<int:eid>", methods=["POST"])
+@login_required
+def edit_elemento(eid):
+    nwa = request.form.get("nome_whatsapp","").strip()
+    with get_db() as con:
+        con.execute("UPDATE elementos SET nome_whatsapp=? WHERE id=?", (nwa, eid))
     return redirect(url_for("elementos"))
 
 @app.route("/elementos/del/<int:eid>", methods=["POST"])
@@ -265,6 +255,93 @@ def tabela(eid):
     return render_template("tabela.html", ev=ev, elementos=elems,
                            opcoes=opcoes, resp_map=resp_map,
                            totais=totais, sem_resp=sem_resp)
+
+
+@app.route("/eventos/<int:eid>/importar-csv", methods=["POST"])
+@login_required
+def importar_csv(eid):
+    import csv, io
+    file = request.files.get("csv_file")
+    if not file:
+        flash("Nenhum ficheiro enviado.")
+        return redirect(url_for("evento", eid=eid))
+
+    with get_db() as con:
+        elems = con.execute("SELECT id, nome, nome_whatsapp FROM elementos").fetchall()
+
+    elem_index = {e["nome"].lower().strip(): e["id"] for e in elems}
+    elem_wa    = {e["nome_whatsapp"].lower().strip(): e["id"] for e in elems if e["nome_whatsapp"]}
+    elem_first = {}
+    for e in elems:
+        primeiro = e["nome"].lower().split()[0]
+        if primeiro not in elem_first:
+            elem_first[primeiro] = e["id"]
+
+    def encontrar_elem(nome_csv):
+        nome_csv = nome_csv.lower().strip()
+        # 1. Nome WhatsApp exato (mais fiável)
+        if nome_csv in elem_wa:
+            return elem_wa[nome_csv]
+        # 2. Nome na app exato
+        if nome_csv in elem_index:
+            return elem_index[nome_csv]
+        # 3. Correspondência parcial WhatsApp
+        for nwa, eid2 in elem_wa.items():
+            if nome_csv in nwa or nwa in nome_csv:
+                return eid2
+        # 4. Correspondência parcial nome app
+        for nome_bd, eid2 in elem_index.items():
+            if nome_csv in nome_bd or nome_bd in nome_csv:
+                return eid2
+        # 5. Primeiro nome
+        primeiro = nome_csv.split()[0]
+        if primeiro in elem_first:
+            return elem_first[primeiro]
+        return None
+
+    stream = io.StringIO(file.stream.read().decode("utf-8-sig"))
+    reader = csv.reader(stream)
+
+    registados = 0
+    nao_encontrados = []
+    opcao_atual = None
+
+    for row in reader:
+        if not row or len(row) < 2:
+            continue
+        col0 = row[0].strip()
+        col1 = row[1].strip()
+
+        if col0 in ("Opcao", "Opção", "Sondagem", "") or col1 in ("Nome", ""):
+            continue
+
+        if col0:
+            opcao_atual = col0
+            nome_csv = col1
+        else:
+            nome_csv = col1
+
+        if not opcao_atual or not nome_csv or nome_csv == "(sem votos)":
+            continue
+
+        elem_id = encontrar_elem(nome_csv)
+        if elem_id:
+            with get_db() as con:
+                con.execute("""
+                    INSERT INTO respostas (evento_id, elemento_id, opcao)
+                    VALUES (?,?,?)
+                    ON CONFLICT(evento_id, elemento_id)
+                    DO UPDATE SET opcao=excluded.opcao
+                """, (eid, elem_id, opcao_atual))
+            registados += 1
+        else:
+            nao_encontrados.append(nome_csv)
+
+    msg = f"{registados} resposta(s) importada(s)."
+    if nao_encontrados:
+        msg += f" Nao encontrados: {', '.join(set(nao_encontrados))}"
+    flash(msg)
+    return redirect(url_for("evento", eid=eid))
 
 if __name__ == "__main__":
     init_db()

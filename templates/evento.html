@@ -57,6 +57,18 @@
   <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Ver tabela</a>
 </div>
 
+
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-title">📥 Importar CSV da sondagem</div>
+  <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui.</p>
+  <form method="post" action="/eventos/{{ ev.id }}/importar-csv" enctype="multipart/form-data">
+    <div class="row">
+      <input type="file" name="csv_file" accept=".csv" style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px">
+      <button class="btn btn-primary" type="submit">Importar</button>
+    </div>
+  </form>
+</div>
+
 <div class="instrucao">
   Abre a poll no WhatsApp → clica <strong>View votes</strong> → seleciona uma opção → clica nos nomes que aparecem aqui em baixo.
 </div>
