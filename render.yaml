@@ -6,8 +6,8 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
-      - key: APP_PASSWORD
-        value: tuna2025
+      - - key: APP_PASSWORD
+        - sync: false
     disk:
       name: tuna-data
       mountPath: /data
