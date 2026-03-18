@@ -3,13 +3,13 @@ from datetime import datetime
 from functools import wraps
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash)
-from PIL import Image
-import pytesseract
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "pastorDesertuna")
+app.secret_key = os.environ.get("SECRET_KEY", "tuna-secret-key-muda-isto")
 PASSWORD = os.environ.get("APP_PASSWORD", "tuna2025")
 DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "tuna.db"))
+
+HIERARQUIA = ["Xeque", "Camelo", "Ali-Bobó"]
 
 # ── Base de dados ─────────────────────────────────────────────────────────────
 
@@ -24,7 +24,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS elementos (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             nome          TEXT UNIQUE NOT NULL,
-            nome_whatsapp TEXT DEFAULT ''
+            nome_whatsapp TEXT DEFAULT '',
+            categoria     TEXT DEFAULT 'Ali-Bobó'
         );
         CREATE TABLE IF NOT EXISTS eventos (
             id     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,11 +43,12 @@ def init_db():
             FOREIGN KEY(elemento_id) REFERENCES elementos(id)
         );
         """)
-    try:
-        with get_db() as con:
-            con.execute("ALTER TABLE elementos ADD COLUMN nome_whatsapp TEXT DEFAULT ''")
-    except Exception:
-        pass
+    for col in ["nome_whatsapp TEXT DEFAULT ''", "categoria TEXT DEFAULT 'Ali-Bobó'"]:
+        try:
+            with get_db() as con:
+                con.execute(f"ALTER TABLE elementos ADD COLUMN {col}")
+        except Exception:
+            pass
 
 with app.app_context():
     init_db()
@@ -90,18 +92,22 @@ def index():
 @login_required
 def elementos():
     with get_db() as con:
-        elems = con.execute("SELECT * FROM elementos ORDER BY nome").fetchall()
-    return render_template("elementos.html", elementos=elems)
+        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+    return render_template("elementos.html", elementos=elems, hierarquia=HIERARQUIA)
 
 @app.route("/elementos/add", methods=["POST"])
 @login_required
 def add_elemento():
-    nome = request.form.get("nome", "").strip()
-    nwa  = request.form.get("nome_whatsapp", "").strip()
+    nome      = request.form.get("nome", "").strip()
+    nwa       = request.form.get("nome_whatsapp", "").strip()
+    categoria = request.form.get("categoria", "Ali-Bobó").strip()
     if nome:
         try:
             with get_db() as con:
-                con.execute("INSERT INTO elementos (nome, nome_whatsapp) VALUES (?,?)", (nome, nwa))
+                con.execute(
+                    "INSERT INTO elementos (nome, nome_whatsapp, categoria) VALUES (?,?,?)",
+                    (nome, nwa, categoria)
+                )
         except sqlite3.IntegrityError:
             flash(f"'{nome}' ja existe.")
     return redirect(url_for("elementos"))
@@ -109,9 +115,13 @@ def add_elemento():
 @app.route("/elementos/edit/<int:eid>", methods=["POST"])
 @login_required
 def edit_elemento(eid):
-    nwa = request.form.get("nome_whatsapp", "").strip()
+    nwa       = request.form.get("nome_whatsapp", "").strip()
+    categoria = request.form.get("categoria", "Ali-Bobó").strip()
     with get_db() as con:
-        con.execute("UPDATE elementos SET nome_whatsapp=? WHERE id=?", (nwa, eid))
+        con.execute(
+            "UPDATE elementos SET nome_whatsapp=?, categoria=? WHERE id=?",
+            (nwa, categoria, eid)
+        )
     return redirect(url_for("elementos"))
 
 @app.route("/elementos/del/<int:eid>", methods=["POST"])
@@ -154,7 +164,7 @@ def del_evento(eid):
 def evento(eid):
     with get_db() as con:
         ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
-        elems = con.execute("SELECT * FROM elementos ORDER BY nome").fetchall()
+        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
         resps = con.execute(
             "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
         ).fetchall()
@@ -163,7 +173,7 @@ def evento(eid):
     opcoes   = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
     resp_map = {r["elemento_id"]: r["opcao"] for r in resps}
     return render_template("evento.html", ev=ev, elementos=elems,
-                           opcoes=opcoes, resp_map=resp_map)
+                           opcoes=opcoes, resp_map=resp_map, hierarquia=HIERARQUIA)
 
 @app.route("/eventos/<int:eid>/resposta", methods=["POST"])
 @login_required
@@ -180,63 +190,42 @@ def set_resposta(eid):
             """, (eid, elem_id, opcao))
     return redirect(url_for("evento", eid=eid))
 
-# ── Lógica de importação CSV (partilhada) ─────────────────────────────────────
+# ── CSV helpers ───────────────────────────────────────────────────────────────
 
 def parse_csv(file_stream):
-    """Lê o CSV do script WhatsApp e devolve (titulo, opcoes, votos).
-    votos = [ {nome_csv, opcao}, ... ]
-    """
-    stream = io.StringIO(file_stream.read().decode("utf-8-sig"))
-    reader = csv.reader(stream)
-
+    stream      = io.StringIO(file_stream.read().decode("utf-8-sig"))
+    reader      = csv.reader(stream)
     titulo      = ""
     opcoes_set  = []
     votos       = []
     opcao_atual = None
-
     for row in reader:
-        if not row:
-            continue
+        if not row: continue
         col0 = row[0].strip() if len(row) > 0 else ""
         col1 = row[1].strip() if len(row) > 1 else ""
-
-        # Linha do título da sondagem
         if col0 == "Sondagem":
-            titulo = col1
-            continue
-
-        # Cabeçalho ou linha vazia
+            titulo = col1; continue
         if col0 in ("Opcao", "Opção", "") and col1 in ("Nome", ""):
             continue
-
-        # Linha com opção e nome
         if col0:
             opcao_atual = col0
             if opcao_atual not in opcoes_set:
                 opcoes_set.append(opcao_atual)
-
         nome_csv = col1
         if not opcao_atual or not nome_csv or nome_csv == "(sem votos)":
             continue
-
         votos.append({"nome": nome_csv, "opcao": opcao_atual})
-
     return titulo, opcoes_set, votos
 
-
 def aplicar_votos(evento_id, votos):
-    """Cruza nomes do CSV com elementos da BD e guarda respostas."""
     with get_db() as con:
         elems = con.execute("SELECT id, nome, nome_whatsapp FROM elementos").fetchall()
-
     elem_index = {e["nome"].lower().strip(): e["id"] for e in elems}
-    elem_wa    = {e["nome_whatsapp"].lower().strip(): e["id"]
-                  for e in elems if e["nome_whatsapp"]}
+    elem_wa    = {e["nome_whatsapp"].lower().strip(): e["id"] for e in elems if e["nome_whatsapp"]}
     elem_first = {}
     for e in elems:
-        primeiro = e["nome"].lower().split()[0]
-        if primeiro not in elem_first:
-            elem_first[primeiro] = e["id"]
+        p = e["nome"].lower().split()[0]
+        if p not in elem_first: elem_first[p] = e["id"]
 
     def encontrar(n):
         n = n.lower().strip()
@@ -248,8 +237,7 @@ def aplicar_votos(evento_id, votos):
             if n in k or k in n: return v
         return elem_first.get(n.split()[0])
 
-    registados      = 0
-    nao_encontrados = []
+    registados, nao_encontrados = 0, []
     for voto in votos:
         elem_id = encontrar(voto["nome"])
         if elem_id:
@@ -263,10 +251,7 @@ def aplicar_votos(evento_id, votos):
             registados += 1
         else:
             nao_encontrados.append(voto["nome"])
-
     return registados, nao_encontrados
-
-# ── Importar CSV — criar novo evento ─────────────────────────────────────────
 
 @app.route("/importar-csv", methods=["POST"])
 @login_required
@@ -275,30 +260,21 @@ def importar_csv_novo():
     if not file:
         flash("Nenhum ficheiro enviado.")
         return redirect(url_for("index"))
-
     titulo, opcoes, votos = parse_csv(file)
-
     if not titulo:
         flash("Nao foi possivel ler o titulo da sondagem no CSV.")
         return redirect(url_for("index"))
-
-    # Criar o evento
     with get_db() as con:
         cur = con.execute(
             "INSERT INTO eventos (nome, opcoes, criado) VALUES (?,?,?)",
             (titulo, "\n".join(opcoes), datetime.now().strftime("%d/%m/%Y %H:%M"))
         )
         evento_id = cur.lastrowid
-
-    registados, nao_encontrados = aplicar_votos(evento_id, votos)
-
+    registados, nao = aplicar_votos(evento_id, votos)
     msg = f"Evento '{titulo}' criado com {registados} resposta(s)."
-    if nao_encontrados:
-        msg += f" Nao encontrados: {', '.join(set(nao_encontrados))}"
+    if nao: msg += f" Nao encontrados: {', '.join(set(nao))}"
     flash(msg)
     return redirect(url_for("evento", eid=evento_id))
-
-# ── Importar CSV — atualizar evento existente ─────────────────────────────────
 
 @app.route("/eventos/<int:eid>/importar-csv", methods=["POST"])
 @login_required
@@ -307,13 +283,10 @@ def importar_csv_update(eid):
     if not file:
         flash("Nenhum ficheiro enviado.")
         return redirect(url_for("evento", eid=eid))
-
     _, _, votos = parse_csv(file)
-    registados, nao_encontrados = aplicar_votos(eid, votos)
-
+    registados, nao = aplicar_votos(eid, votos)
     msg = f"{registados} resposta(s) atualizadas."
-    if nao_encontrados:
-        msg += f" Nao encontrados: {', '.join(set(nao_encontrados))}"
+    if nao: msg += f" Nao encontrados: {', '.join(set(nao))}"
     flash(msg)
     return redirect(url_for("evento", eid=eid))
 
@@ -324,7 +297,7 @@ def importar_csv_update(eid):
 def tabela(eid):
     with get_db() as con:
         ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
-        elems = con.execute("SELECT * FROM elementos ORDER BY nome").fetchall()
+        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
         resps = con.execute(
             "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
         ).fetchall()
@@ -334,9 +307,16 @@ def tabela(eid):
     resp_map = {r["elemento_id"]: r["opcao"] for r in resps}
     totais   = {op: sum(1 for v in resp_map.values() if v == op) for op in opcoes}
     sem_resp = sum(1 for e in elems if e["id"] not in resp_map)
+
+    # Separar por grupo
+    xeques   = [e for e in elems if e["categoria"] == "Xeque"]
+    membros  = [e for e in elems if e["categoria"] != "Xeque"]
+
     return render_template("tabela.html", ev=ev, elementos=elems,
                            opcoes=opcoes, resp_map=resp_map,
-                           totais=totais, sem_resp=sem_resp)
+                           totais=totais, sem_resp=sem_resp,
+                           xeques=xeques, membros=membros,
+                           hierarquia=HIERARQUIA)
 
 if __name__ == "__main__":
     init_db()

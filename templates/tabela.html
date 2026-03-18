@@ -25,9 +25,11 @@
   </div>
 </div>
 
-<!-- Lista de membros -->
-<div class="card" style="padding:.5rem">
-  {% for elem in elementos %}
+<!-- Tabela Xeques -->
+{% if xeques %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Xeques</div>
+<div class="card" style="padding:.5rem;margin-bottom:1rem">
+  {% for elem in xeques %}
   {% set resp = resp_map.get(elem.id, '') %}
   {% set slug = resp | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
   <div style="display:flex;align-items:center;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
@@ -40,4 +42,33 @@
   </div>
   {% endfor %}
 </div>
+{% endif %}
+
+<!-- Tabela Camelos + Ali-Bobós -->
+{% if membros %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Camelos &amp; Ali-Bobós</div>
+<div class="card" style="padding:.5rem">
+  {% for cat in ["Camelo", "Ali-Bobó"] %}
+  {% set membros_cat = membros | selectattr('categoria', 'equalto', cat) | list %}
+  {% if membros_cat %}
+  <div style="padding:.4rem .75rem;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-radius:6px;margin:.25rem 0">
+    {{ cat }}s
+  </div>
+  {% for elem in membros_cat %}
+  {% set resp = resp_map.get(elem.id, '') %}
+  {% set slug = resp | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+  <div style="display:flex;align-items:center;padding:.7rem .75rem;border-bottom:1px solid var(--border)">
+    <span style="flex:1;font-weight:500">{{ elem.nome }}</span>
+    {% if resp %}
+    <span class="badge badge-{{ slug }}">{{ resp }}</span>
+    {% else %}
+    <span class="badge badge-none">—</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
 {% endblock %}
