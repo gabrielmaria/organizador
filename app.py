@@ -6,7 +6,7 @@ from flask import (Flask, render_template, request, redirect,
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
-PASSWORD    = os.environ.get("APP_PASSWORD", "tuna2025")
+PASSWORD    = os.environ.get("APP_PASSWORD")
 TURSO_URL   = os.environ.get("TURSO_URL", "")
 TURSO_TOKEN = os.environ.get("TURSO_TOKEN", "")
 
