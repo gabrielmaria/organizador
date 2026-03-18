@@ -5,7 +5,7 @@ from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "pastorDesertuna")
+app.secret_key = os.environ.get("SECRET_KEY", "tuna-secret-key-muda-isto")
 PASSWORD  = os.environ.get("APP_PASSWORD", "tuna2025")
 TURSO_URL   = os.environ.get("TURSO_URL", "")
 TURSO_TOKEN = os.environ.get("TURSO_TOKEN", "")
@@ -16,7 +16,8 @@ HIERARQUIA = ["Xeque", "Camelo", "Ali-Bobó"]
 
 def get_db():
     if TURSO_URL and TURSO_TOKEN:
-        con = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
+        con = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN, sync_url=TURSO_URL)
+        con.sync()
     else:
         con = sqlite3.connect("tuna.db")
     con.row_factory = sqlite3.Row
