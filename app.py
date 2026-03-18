@@ -1,4 +1,4 @@
-import os, sqlite3, csv, io
+import os, sqlite3, csv, io, libsql_experimental as libsql
 from datetime import datetime
 from functools import wraps
 from flask import (Flask, render_template, request, redirect,
@@ -6,15 +6,20 @@ from flask import (Flask, render_template, request, redirect,
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "tuna-secret-key-muda-isto")
-PASSWORD = os.environ.get("APP_PASSWORD", "tuna2025")
-DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "tuna.db"))
+PASSWORD  = os.environ.get("APP_PASSWORD", "tuna2025")
+TURSO_URL   = os.environ.get("TURSO_URL", "")
+TURSO_TOKEN = os.environ.get("TURSO_TOKEN", "")
 
 HIERARQUIA = ["Xeque", "Camelo", "Ali-Bobó"]
 
 # ── Base de dados ─────────────────────────────────────────────────────────────
 
 def get_db():
-    con = sqlite3.connect(DB)
+    if TURSO_URL and TURSO_TOKEN:
+        con = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN, sync_url=TURSO_URL)
+        con.sync()
+    else:
+        con = sqlite3.connect("tuna.db")
     con.row_factory = sqlite3.Row
     return con
 
@@ -108,7 +113,7 @@ def add_elemento():
                     "INSERT INTO elementos (nome, nome_whatsapp, categoria) VALUES (?,?,?)",
                     (nome, nwa, categoria)
                 )
-        except sqlite3.IntegrityError:
+        except Exception:
             flash(f"'{nome}' ja existe.")
     return redirect(url_for("elementos"))
 
@@ -307,11 +312,8 @@ def tabela(eid):
     resp_map = {r["elemento_id"]: r["opcao"] for r in resps}
     totais   = {op: sum(1 for v in resp_map.values() if v == op) for op in opcoes}
     sem_resp = sum(1 for e in elems if e["id"] not in resp_map)
-
-    # Separar por grupo
     xeques   = [e for e in elems if e["categoria"] == "Xeque"]
     membros  = [e for e in elems if e["categoria"] != "Xeque"]
-
     return render_template("tabela.html", ev=ev, elementos=elems,
                            opcoes=opcoes, resp_map=resp_map,
                            totais=totais, sem_resp=sem_resp,
