@@ -4,10 +4,6 @@
 <style>
 .opcao-section{margin-bottom:1.5rem}
 .opcao-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
-.opcao-pill{display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:15px;font-weight:600}
-.opcao-count{font-size:13px;color:var(--text2)}
-
-/* Grid de membros clicáveis */
 .membros-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.5rem}
 .membro-btn{
   display:flex;align-items:center;gap:8px;
@@ -20,15 +16,12 @@
 .membro-btn:hover{border-color:var(--border2);background:var(--bg)}
 .membro-btn:active{transform:scale(.96)}
 .membro-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:.15s}
-
-/* Estados selecionados */
 .membro-btn.sel-sim{border-color:var(--green-border);background:var(--green-bg);color:var(--green)}
 .membro-btn.sel-sim .dot{background:var(--green-border)}
 .membro-btn.sel-nao{border-color:var(--red-border);background:var(--red-bg);color:var(--red)}
 .membro-btn.sel-nao .dot{background:var(--red-border)}
 .membro-btn.sel-talvez{border-color:var(--amber-border);background:var(--amber-bg);color:var(--amber)}
 .membro-btn.sel-talvez .dot{background:var(--amber-border)}
-
 .save-bar{
   position:sticky;bottom:1rem;
   background:var(--blue);color:#fff;
@@ -42,42 +35,37 @@
 .save-bar:hover{background:#0c447c}
 .save-bar:active{transform:scale(.98)}
 .save-bar.hidden{display:none}
-
-.instrucao{background:var(--blue-bg);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:#0c447c;margin-bottom:1rem;line-height:1.5}
 </style>
 {% endblock %}
 {% block content %}
 
 <div class="row" style="margin-bottom:1rem">
-  <div>
+  <div style="flex:1;min-width:0">
     <h1 style="font-size:18px;font-weight:700">{{ ev.nome }}</h1>
     <span class="muted">{{ ev.criado }}</span>
   </div>
-  <div class="spacer"></div>
   <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Ver tabela</a>
+  <a href="{{ url_for('index') }}" class="btn btn-sm">← Voltar</a>
 </div>
 
-
+<!-- Atualizar com novo CSV -->
 <div class="card" style="margin-bottom:1rem">
-  <div class="card-title">📥 Importar CSV da sondagem</div>
-  <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui.</p>
-  <form method="post" action="/eventos/{{ ev.id }}/importar-csv" enctype="multipart/form-data">
+  <div class="card-title">🔄 Atualizar com novo CSV</div>
+  <p class="muted" style="margin-bottom:.75rem">Se correste o script de novo com mais votos, importa aqui para atualizar.</p>
+  <form method="post" action="{{ url_for('importar_csv_update', eid=ev.id) }}" enctype="multipart/form-data">
     <div class="row">
-      <input type="file" name="csv_file" accept=".csv" style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px">
-      <button class="btn btn-primary" type="submit">Importar</button>
+      <input type="file" name="csv_file" accept=".csv" style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px;background:var(--card);color:var(--text)">
+      <button class="btn btn-primary" type="submit">Atualizar</button>
     </div>
   </form>
 </div>
 
-<div class="instrucao">
-  Abre a poll no WhatsApp → clica <strong>View votes</strong> → seleciona uma opção → clica nos nomes que aparecem aqui em baixo.
-</div>
-
+<!-- Registo manual por opção -->
 {% for op in opcoes %}
 <div class="card opcao-section">
   <div class="opcao-header">
-    <span class="opcao-pill badge-{{ op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') }}">{{ op }}</span>
-    <span class="opcao-count" id="count-{{ loop.index }}">
+    <span class="badge badge-{{ op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') }}" style="font-size:15px;padding:5px 14px">{{ op }}</span>
+    <span class="muted" id="count-{{ loop.index }}">
       {{ resp_map.values() | selectattr('__eq__', 'equalto', op) | list | length }} selecionados
     </span>
   </div>
@@ -99,18 +87,13 @@
 </div>
 {% endfor %}
 
-<button class="save-bar" id="save-bar" onclick="guardarTudo()">
+<button class="save-bar hidden" id="save-bar" onclick="guardarTudo()">
   <span>Guardar alterações</span>
   <span id="save-count">0 alterações</span>
 </button>
 
 <script>
 const alteracoes = {};
-const respostasOriginais = {
-  {% for elem in elementos %}
-  {{ elem.id }}: "{{ resp_map.get(elem.id, '') }}",
-  {% endfor %}
-};
 
 function slugify(s) {
   return s.toLowerCase().replace(/ /g,'').replace(/ã/g,'a').replace(/é/g,'e').replace(/á/g,'a').replace(/ê/g,'e').replace(/ó/g,'o').replace(/ú/g,'u').replace(/í/g,'i').replace(/ç/g,'c').replace(/ô/g,'o');
@@ -118,21 +101,17 @@ function slugify(s) {
 
 function toggleMembro(btn) {
   const elemId = btn.dataset.elem;
-  const opcao = btn.dataset.opcao;
-  const slug = btn.dataset.slug;
+  const opcao  = btn.dataset.opcao;
+  const slug   = btn.dataset.slug;
   const jaSelec = btn.classList.contains('sel-' + slug);
 
-  // Remover esta opção de todos os botões deste elemento
   document.querySelectorAll(`.membro-btn[data-elem="${elemId}"]`).forEach(b => {
-    const s = b.dataset.slug;
-    b.classList.remove('sel-' + s);
+    b.classList.remove('sel-' + b.dataset.slug);
   });
 
   if (jaSelec) {
-    // Deselecionar — sem resposta
     alteracoes[elemId] = '';
   } else {
-    // Selecionar esta opção
     btn.classList.add('sel-' + slug);
     alteracoes[elemId] = opcao;
   }
@@ -142,31 +121,26 @@ function toggleMembro(btn) {
 }
 
 function atualizarContadores() {
-  document.querySelectorAll('.opcao-section').forEach((sec, i) => {
-    const opcao = sec.querySelector('.membro-btn').dataset.opcao;
+  document.querySelectorAll('.opcao-section').forEach(sec => {
     const total = sec.querySelectorAll('.membro-btn[class*="sel-"]').length;
-    sec.querySelector('.opcao-count').textContent = total + ' selecionados';
+    sec.querySelector('[id^="count-"]').textContent = total + ' selecionados';
   });
 }
 
 function atualizarBarra() {
   const n = Object.keys(alteracoes).length;
-  const bar = document.getElementById('save-bar');
-  document.getElementById('save-count').textContent = n + (n === 1 ? ' alteração' : ' alterações');
-  bar.classList.toggle('hidden', n === 0);
+  document.getElementById('save-count').textContent = n + (n === 1 ? ' alteracao' : ' alteracoes');
+  document.getElementById('save-bar').classList.toggle('hidden', n === 0);
 }
 
 async function guardarTudo() {
-  const bar = document.getElementById('save-bar');
-  bar.textContent = 'A guardar...';
-  
+  document.getElementById('save-bar').textContent = 'A guardar...';
   const promises = Object.entries(alteracoes).map(([elemId, opcao]) => {
     const fd = new FormData();
     fd.append('elemento_id', elemId);
     fd.append('opcao', opcao);
     return fetch('/eventos/{{ ev.id }}/resposta', {method:'POST', body:fd});
   });
-  
   await Promise.all(promises);
   location.reload();
 }

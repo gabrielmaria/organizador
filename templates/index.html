@@ -1,10 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Eventos — Tuna{% endblock %}
 {% block content %}
+
 <div class="row" style="margin-bottom:1.25rem">
   <h1 style="font-size:20px;font-weight:700">Eventos</h1>
   <div class="spacer"></div>
-  <a href="{{ url_for('novo_evento') }}" class="btn btn-primary btn-sm">+ Novo</a>
+  <a href="{{ url_for('novo_evento') }}" class="btn btn-sm">+ Manual</a>
+</div>
+
+<!-- Importar CSV para criar evento novo -->
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-title">📥 Criar evento a partir do CSV</div>
+  <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui. O evento é criado automaticamente com o título, opções e votos.</p>
+  <form method="post" action="{{ url_for('importar_csv_novo') }}" enctype="multipart/form-data">
+    <div class="row">
+      <input type="file" name="csv_file" accept=".csv" style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px;background:var(--card);color:var(--text)">
+      <button class="btn btn-primary" type="submit">Importar e criar</button>
+    </div>
+  </form>
 </div>
 
 {% if eventos %}
@@ -15,7 +28,7 @@
       <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.nome }}</div>
       <div class="muted">{{ ev.criado }}</div>
     </div>
-    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Registar</a>
+    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Editar</a>
     <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>
     <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Apagar este evento?')">
       <button class="btn btn-sm btn-danger">✕</button>
@@ -26,8 +39,7 @@
 {% else %}
 <div class="card" style="text-align:center;padding:3rem;color:var(--text2)">
   <div style="font-size:2rem;margin-bottom:.5rem">🎵</div>
-  Nenhum evento ainda.<br>
-  <a href="{{ url_for('novo_evento') }}" style="margin-top:.5rem;display:inline-block">Cria o primeiro</a>
+  Nenhum evento ainda.<br>Importa um CSV ou cria manualmente.
 </div>
 {% endif %}
 {% endblock %}

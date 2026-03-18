@@ -1,14 +1,14 @@
-import os, re, sqlite3, csv, io
+import os, sqlite3, csv, io
 from datetime import datetime
 from functools import wraps
 from flask import (Flask, render_template, request, redirect,
-                   url_for, session, jsonify, flash)
+                   url_for, session, flash)
 from PIL import Image
 import pytesseract
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "pastorDesertuna")
-PASSWORD = os.environ.get("APP_PASSWORD", "123abcDesertuna123ABC")
+PASSWORD = os.environ.get("APP_PASSWORD", "tuna2025")
 DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "tuna.db"))
 
 # ── Base de dados ─────────────────────────────────────────────────────────────
@@ -180,16 +180,52 @@ def set_resposta(eid):
             """, (eid, elem_id, opcao))
     return redirect(url_for("evento", eid=eid))
 
-# ── Importar CSV ──────────────────────────────────────────────────────────────
+# ── Lógica de importação CSV (partilhada) ─────────────────────────────────────
 
-@app.route("/eventos/<int:eid>/importar-csv", methods=["POST"])
-@login_required
-def importar_csv(eid):
-    file = request.files.get("csv_file")
-    if not file:
-        flash("Nenhum ficheiro enviado.")
-        return redirect(url_for("evento", eid=eid))
+def parse_csv(file_stream):
+    """Lê o CSV do script WhatsApp e devolve (titulo, opcoes, votos).
+    votos = [ {nome_csv, opcao}, ... ]
+    """
+    stream = io.StringIO(file_stream.read().decode("utf-8-sig"))
+    reader = csv.reader(stream)
 
+    titulo      = ""
+    opcoes_set  = []
+    votos       = []
+    opcao_atual = None
+
+    for row in reader:
+        if not row:
+            continue
+        col0 = row[0].strip() if len(row) > 0 else ""
+        col1 = row[1].strip() if len(row) > 1 else ""
+
+        # Linha do título da sondagem
+        if col0 == "Sondagem":
+            titulo = col1
+            continue
+
+        # Cabeçalho ou linha vazia
+        if col0 in ("Opcao", "Opção", "") and col1 in ("Nome", ""):
+            continue
+
+        # Linha com opção e nome
+        if col0:
+            opcao_atual = col0
+            if opcao_atual not in opcoes_set:
+                opcoes_set.append(opcao_atual)
+
+        nome_csv = col1
+        if not opcao_atual or not nome_csv or nome_csv == "(sem votos)":
+            continue
+
+        votos.append({"nome": nome_csv, "opcao": opcao_atual})
+
+    return titulo, opcoes_set, votos
+
+
+def aplicar_votos(evento_id, votos):
+    """Cruza nomes do CSV com elementos da BD e guarda respostas."""
     with get_db() as con:
         elems = con.execute("SELECT id, nome, nome_whatsapp FROM elementos").fetchall()
 
@@ -202,46 +238,20 @@ def importar_csv(eid):
         if primeiro not in elem_first:
             elem_first[primeiro] = e["id"]
 
-    def encontrar_elem(nome_csv):
-        n = nome_csv.lower().strip()
-        if n in elem_wa:
-            return elem_wa[n]
-        if n in elem_index:
-            return elem_index[n]
-        for nwa, eid2 in elem_wa.items():
-            if n in nwa or nwa in n:
-                return eid2
-        for nb, eid2 in elem_index.items():
-            if n in nb or nb in n:
-                return eid2
-        primeiro = n.split()[0]
-        return elem_first.get(primeiro)
+    def encontrar(n):
+        n = n.lower().strip()
+        if n in elem_wa:    return elem_wa[n]
+        if n in elem_index: return elem_index[n]
+        for k, v in elem_wa.items():
+            if n in k or k in n: return v
+        for k, v in elem_index.items():
+            if n in k or k in n: return v
+        return elem_first.get(n.split()[0])
 
-    stream          = io.StringIO(file.stream.read().decode("utf-8-sig"))
-    reader          = csv.reader(stream)
     registados      = 0
     nao_encontrados = []
-    opcao_atual     = None
-
-    for row in reader:
-        if not row or len(row) < 2:
-            continue
-        col0 = row[0].strip()
-        col1 = row[1].strip()
-
-        if col0 in ("Opcao", "Opcao", "Sondagem", "") or col1 in ("Nome", ""):
-            continue
-
-        if col0:
-            opcao_atual = col0
-            nome_csv    = col1
-        else:
-            nome_csv = col1
-
-        if not opcao_atual or not nome_csv or nome_csv == "(sem votos)":
-            continue
-
-        elem_id = encontrar_elem(nome_csv)
+    for voto in votos:
+        elem_id = encontrar(voto["nome"])
         if elem_id:
             with get_db() as con:
                 con.execute("""
@@ -249,12 +259,59 @@ def importar_csv(eid):
                     VALUES (?,?,?)
                     ON CONFLICT(evento_id, elemento_id)
                     DO UPDATE SET opcao=excluded.opcao
-                """, (eid, elem_id, opcao_atual))
+                """, (evento_id, elem_id, voto["opcao"]))
             registados += 1
         else:
-            nao_encontrados.append(nome_csv)
+            nao_encontrados.append(voto["nome"])
 
-    msg = f"{registados} resposta(s) importada(s)."
+    return registados, nao_encontrados
+
+# ── Importar CSV — criar novo evento ─────────────────────────────────────────
+
+@app.route("/importar-csv", methods=["POST"])
+@login_required
+def importar_csv_novo():
+    file = request.files.get("csv_file")
+    if not file:
+        flash("Nenhum ficheiro enviado.")
+        return redirect(url_for("index"))
+
+    titulo, opcoes, votos = parse_csv(file)
+
+    if not titulo:
+        flash("Nao foi possivel ler o titulo da sondagem no CSV.")
+        return redirect(url_for("index"))
+
+    # Criar o evento
+    with get_db() as con:
+        cur = con.execute(
+            "INSERT INTO eventos (nome, opcoes, criado) VALUES (?,?,?)",
+            (titulo, "\n".join(opcoes), datetime.now().strftime("%d/%m/%Y %H:%M"))
+        )
+        evento_id = cur.lastrowid
+
+    registados, nao_encontrados = aplicar_votos(evento_id, votos)
+
+    msg = f"Evento '{titulo}' criado com {registados} resposta(s)."
+    if nao_encontrados:
+        msg += f" Nao encontrados: {', '.join(set(nao_encontrados))}"
+    flash(msg)
+    return redirect(url_for("evento", eid=evento_id))
+
+# ── Importar CSV — atualizar evento existente ─────────────────────────────────
+
+@app.route("/eventos/<int:eid>/importar-csv", methods=["POST"])
+@login_required
+def importar_csv_update(eid):
+    file = request.files.get("csv_file")
+    if not file:
+        flash("Nenhum ficheiro enviado.")
+        return redirect(url_for("evento", eid=eid))
+
+    _, _, votos = parse_csv(file)
+    registados, nao_encontrados = aplicar_votos(eid, votos)
+
+    msg = f"{registados} resposta(s) atualizadas."
     if nao_encontrados:
         msg += f" Nao encontrados: {', '.join(set(nao_encontrados))}"
     flash(msg)
