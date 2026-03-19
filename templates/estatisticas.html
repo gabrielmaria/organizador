@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Estatísticas — Tuna{% endblock %}
+{% block head %}
+<style>
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:1rem;
+  margin-bottom:.5rem;display:flex;align-items:center;gap:1rem;
+  text-decoration:none;color:inherit;transition:.15s;
+}
+.stat-card:hover{ border-color:var(--blue); box-shadow:0 2px 10px rgba(24,95,165,.08) }
+
+.stat-avatar{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--blue-bg);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:700;flex-shrink:0
+}
+.stat-nome { font-weight:600;font-size:15px }
+.stat-cat  { font-size:12px;color:var(--text3) }
+
+.bar-row   { display:flex;align-items:center;gap:6px;font-size:12px;margin-top:6px }
+.bar-label { width:60px;color:var(--text2);flex-shrink:0 }
+.bar-track { flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden }
+.bar-fill  { height:100%;border-radius:4px;transition:width .5s }
+.bar-green { background:var(--green-border) }
+.bar-amber { background:var(--amber-border) }
+.bar-red   { background:var(--red-border) }
+.bar-pct   { width:34px;font-weight:600;color:var(--text);text-align:right;flex-shrink:0 }
+
+.filter-tabs { display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap }
+.filter-tab{
+  padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500;
+  cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);transition:.15s
+}
+.filter-tab.active { background:var(--blue);color:#fff;border-color:var(--blue) }
+
+.sort-row { display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;font-size:13px;color:var(--text2) }
+.sort-row select { width:auto;padding:5px 10px;font-size:13px }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.25rem">
+  <h1 style="font-size:20px;font-weight:700">Estatísticas</h1>
+  <div class="spacer"></div>
+  <span class="muted">{{ total_ensaios }} ensaios</span>
+</div>
+
+<div class="filter-tabs">
+  <button class="filter-tab active" onclick="filtrar(this,'todos')">Todos</button>
+  {% for cat in hierarquia %}
+  <button class="filter-tab" onclick="filtrar(this,'{{ cat }}')">{{ cat }}s</button>
+  {% endfor %}
+</div>
+
+<div class="sort-row">
+  Ordenar por:
+  <select onchange="ordenar(this.value)">
+    <option value="nome">Nome</option>
+    <option value="presenca">% Presença</option>
+    <option value="atraso">% Atraso</option>
+    <option value="falta">% Falta</option>
+  </select>
+</div>
+
+<div id="lista">
+{% for s in stats %}
+<a class="stat-card"
+   href="{{ url_for('estatisticas_membro', elem_id=s.elem.id) }}"
+   data-cat="{{ s.elem.categoria }}"
+   data-nome="{{ s.elem.nome }}"
+   data-presenca="{{ s.pct_presenca }}"
+   data-atraso="{{ s.pct_atraso }}"
+   data-falta="{{ s.pct_falta }}">
+  <div class="stat-avatar">{{ s.elem.nome[0] | upper }}</div>
+  <div style="flex:1;min-width:0">
+    <div class="stat-nome">{{ s.elem.nome }}</div>
+    <div class="stat-cat">{{ s.elem.categoria }}</div>
+    <div class="bar-row">
+      <span class="bar-label">Presença</span>
+      <div class="bar-track"><div class="bar-fill bar-green" style="width:{{ s.pct_presenca }}%"></div></div>
+      <span class="bar-pct">{{ s.pct_presenca }}%</span>
+    </div>
+    {% if s.n_atrasado > 0 %}
+    <div class="bar-row">
+      <span class="bar-label">Atrasos</span>
+      <div class="bar-track"><div class="bar-fill bar-amber" style="width:{{ s.pct_atraso }}%"></div></div>
+      <span class="bar-pct">{{ s.pct_atraso }}%</span>
+    </div>
+    {% endif %}
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-size:24px;font-weight:800;color:{% if s.pct_presenca >= 75 %}var(--green){% elif s.pct_presenca >= 50 %}var(--amber){% else %}var(--red){% endif %}">
+      {{ s.pct_presenca }}%
+    </div>
+    <div style="font-size:11px;color:var(--text3)">{{ s.n_presente }}/{{ s.total_ensaios }}</div>
+  </div>
+</a>
+{% else %}
+<div class="card" style="text-align:center;padding:3rem;color:var(--text2)">
+  <div style="font-size:2rem;margin-bottom:.5rem">📊</div>
+  Nenhum membro ou ensaio ainda.
+</div>
+{% endfor %}
+</div>
+
+<script>
+function filtrar(btn, cat) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#lista .stat-card').forEach(c => {
+    c.style.display = (cat === 'todos' || c.dataset.cat === cat) ? '' : 'none';
+  });
+}
+
+function ordenar(by) {
+  const lista = document.getElementById('lista');
+  const cards = [...lista.querySelectorAll('.stat-card')];
+  cards.sort((a, b) => {
+    if (by === 'nome')     return a.dataset.nome.localeCompare(b.dataset.nome, 'pt');
+    if (by === 'presenca') return +b.dataset.presenca - +a.dataset.presenca;
+    if (by === 'atraso')   return +b.dataset.atraso   - +a.dataset.atraso;
+    if (by === 'falta')    return +b.dataset.falta     - +a.dataset.falta;
+    return 0;
+  });
+  cards.forEach(c => lista.appendChild(c));
+}
+</script>
+{% endblock %}

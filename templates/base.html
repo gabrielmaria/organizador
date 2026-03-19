@@ -17,15 +17,15 @@
 }
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;min-height:100vh}
 a{color:var(--blue);text-decoration:none}
-nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center;height:54px;gap:.5rem;position:sticky;top:0;z-index:100}
-.brand{font-weight:700;font-size:17px;margin-right:auto}
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center;height:54px;gap:.5rem;position:sticky;top:0;z-index:100;overflow-x:auto}
+.brand{font-weight:700;font-size:17px;margin-right:auto;white-space:nowrap}
 .nav-link{font-size:14px;color:var(--text2);padding:6px 12px;border-radius:8px;white-space:nowrap}
 .nav-link:hover{background:var(--bg);color:var(--text)}
 .container{max-width:640px;margin:0 auto;padding:1.25rem 1rem 3rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:.75rem}
 .card-title{font-size:16px;font-weight:600;margin-bottom:1rem}
 label{font-size:13px;color:var(--text2);display:block;margin-bottom:4px}
-input[type=text],input[type=password],textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius);font-size:15px;font-family:inherit;background:var(--card);color:var(--text);-webkit-appearance:none}
+input[type=text],input[type=password],input[type=date],textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius);font-size:15px;font-family:inherit;background:var(--card);color:var(--text);-webkit-appearance:none}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12)}
 textarea{min-height:100px;resize:vertical}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius);font-size:15px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--card);color:var(--text);transition:.15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
@@ -42,6 +42,10 @@ textarea{min-height:100px;resize:vertical}
 .badge-nao{background:var(--red-bg);color:var(--red)}
 .badge-talvez{background:var(--amber-bg);color:var(--amber)}
 .badge-none{background:var(--bg);color:var(--text3)}
+.badge-ahoras{background:var(--green-bg);color:var(--green)}
+.badge-atrasado{background:var(--amber-bg);color:var(--amber)}
+.badge-naoveio{background:var(--red-bg);color:var(--red)}
+.badge-semregisto{background:var(--bg);color:var(--text3)}
 .flash{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;font-size:14px;color:var(--amber)}
 .row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
@@ -55,7 +59,9 @@ textarea{min-height:100px;resize:vertical}
 <nav>
   <span class="brand">🎵 Tuna</span>
   <a href="{{ url_for('index') }}" class="nav-link">Eventos</a>
+  <a href="{{ url_for('ensaios') }}" class="nav-link">Ensaios</a>
   <a href="{{ url_for('elementos') }}" class="nav-link">Membros</a>
+  <a href="{{ url_for('estatisticas') }}" class="nav-link">Stats</a>
   <a href="{{ url_for('logout') }}" class="nav-link">Sair</a>
 </nav>
 {% endif %}

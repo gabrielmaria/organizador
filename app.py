@@ -1,8 +1,8 @@
 import os, sqlite3, csv, io, libsql_experimental as libsql
-from datetime import datetime
+from datetime import datetime, date
 from functools import wraps
 from flask import (Flask, render_template, request, redirect,
-                   url_for, session, flash)
+                   url_for, session, flash, jsonify)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
@@ -22,7 +22,6 @@ def dict_factory(cursor, row):
     return DictRow(zip([d[0] for d in cursor.description], row))
 
 class TursoConnection:
-    """Wrapper para libsql que emula row_factory como o sqlite3."""
     def __init__(self, con):
         self._con = con
 
@@ -91,6 +90,22 @@ def init_db():
             FOREIGN KEY(evento_id)   REFERENCES eventos(id),
             FOREIGN KEY(elemento_id) REFERENCES elementos(id)
         );
+        CREATE TABLE IF NOT EXISTS ensaios (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            data    TEXT NOT NULL,
+            criado  TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS presencas (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            ensaio_id   INTEGER NOT NULL,
+            elemento_id INTEGER NOT NULL,
+            estado      TEXT NOT NULL DEFAULT 'sem-registo',
+            hora        TEXT DEFAULT '',
+            nota        TEXT DEFAULT '',
+            UNIQUE(ensaio_id, elemento_id),
+            FOREIGN KEY(ensaio_id)   REFERENCES ensaios(id),
+            FOREIGN KEY(elemento_id) REFERENCES elementos(id)
+        );
         """)
     for col in ["nome_whatsapp TEXT DEFAULT ''", "categoria TEXT DEFAULT 'Ali-Bobó'"]:
         try:
@@ -98,6 +113,15 @@ def init_db():
                 con.execute(f"ALTER TABLE elementos ADD COLUMN {col}")
         except Exception:
             pass
+
+@app.template_filter('format_date')
+def format_date_filter(data_str):
+    try:
+        d = datetime.strptime(data_str, "%Y-%m-%d")
+        dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+        return f"{dias[d.weekday()]}, {d.strftime('%d/%m/%Y')}"
+    except Exception:
+        return data_str
 
 with app.app_context():
     init_db()
@@ -363,6 +387,179 @@ def tabela(eid):
                            totais=totais, sem_resp=sem_resp,
                            xeques=xeques, membros=membros,
                            hierarquia=HIERARQUIA)
+
+# ── Ensaios ───────────────────────────────────────────────────────────────────
+
+@app.route("/ensaios")
+@login_required
+def ensaios():
+    with get_db() as con:
+        lista = con.execute("SELECT * FROM ensaios ORDER BY data DESC").fetchall()
+    return render_template("ensaios.html", ensaios=lista)
+
+@app.route("/ensaios/novo", methods=["POST"])
+@login_required
+def novo_ensaio():
+    data_str = request.form.get("data", "").strip()
+    if not data_str:
+        flash("Escolhe uma data.")
+        return redirect(url_for("ensaios"))
+    with get_db() as con:
+        existe = con.execute("SELECT id FROM ensaios WHERE data=?", (data_str,)).fetchone()
+        if existe:
+            flash("Já existe um ensaio registado para essa data.")
+            return redirect(url_for("ensaios"))
+        cur = con.execute(
+            "INSERT INTO ensaios (data, criado) VALUES (?,?)",
+            (data_str, datetime.now().strftime("%d/%m/%Y %H:%M"))
+        )
+        eid = cur.lastrowid
+    return redirect(url_for("ensaio_detail", eid=eid))
+
+@app.route("/ensaios/<int:eid>/del", methods=["POST"])
+@login_required
+def del_ensaio(eid):
+    with get_db() as con:
+        con.execute("DELETE FROM presencas WHERE ensaio_id=?", (eid,))
+        con.execute("DELETE FROM ensaios WHERE id=?", (eid,))
+    return redirect(url_for("ensaios"))
+
+@app.route("/ensaios/<int:eid>")
+@login_required
+def ensaio_detail(eid):
+    with get_db() as con:
+        ensaio = con.execute("SELECT * FROM ensaios WHERE id=?", (eid,)).fetchone()
+        elems  = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+        prescs = con.execute(
+            "SELECT elemento_id, estado, hora, nota FROM presencas WHERE ensaio_id=?", (eid,)
+        ).fetchall()
+    if not ensaio:
+        return redirect(url_for("ensaios"))
+
+    try:
+        d = datetime.strptime(ensaio["data"], "%Y-%m-%d")
+        dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+        titulo = f"Ensaio de {dias[d.weekday()]}, {d.strftime('%d/%m/%Y')}"
+    except Exception:
+        titulo = f"Ensaio de {ensaio['data']}"
+
+    presc_map = {p["elemento_id"]: p for p in prescs}
+    totais = {
+        "a-horas":     sum(1 for p in prescs if p["estado"] == "a-horas"),
+        "atrasado":    sum(1 for p in prescs if p["estado"] == "atrasado"),
+        "nao-veio":    sum(1 for p in prescs if p["estado"] == "nao-veio"),
+        "sem-registo": sum(1 for e in elems if presc_map.get(e["id"], {}).get("estado", "sem-registo") == "sem-registo"),
+    }
+    return render_template("ensaio_detail.html",
+                           ensaio=ensaio, titulo=titulo,
+                           elementos=elems, presc_map=presc_map,
+                           totais=totais, hierarquia=HIERARQUIA)
+
+@app.route("/ensaios/<int:eid>/presenca", methods=["POST"])
+@login_required
+def set_presenca(eid):
+    elem_id = request.form.get("elemento_id")
+    estado  = request.form.get("estado", "sem-registo").strip()
+    hora    = request.form.get("hora", "").strip()
+    nota    = request.form.get("nota", "").strip()
+    if elem_id:
+        with get_db() as con:
+            con.execute("""
+                INSERT INTO presencas (ensaio_id, elemento_id, estado, hora, nota)
+                VALUES (?,?,?,?,?)
+                ON CONFLICT(ensaio_id, elemento_id)
+                DO UPDATE SET estado=excluded.estado, hora=excluded.hora, nota=excluded.nota
+            """, (eid, elem_id, estado, hora, nota))
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"ok": True})
+    return redirect(url_for("ensaio_detail", eid=eid))
+
+# ── Estatísticas ──────────────────────────────────────────────────────────────
+
+@app.route("/estatisticas")
+@login_required
+def estatisticas():
+    with get_db() as con:
+        elems         = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+        total_ensaios = con.execute("SELECT COUNT(*) as n FROM ensaios").fetchone()["n"]
+        presencas_todas = con.execute("SELECT elemento_id, estado FROM presencas").fetchall()
+
+    presc_por_elem = {}
+    for p in presencas_todas:
+        presc_por_elem.setdefault(p["elemento_id"], []).append(p["estado"])
+
+    stats = []
+    for e in elems:
+        prescs      = presc_por_elem.get(e["id"], [])
+        n_presente  = sum(1 for p in prescs if p in ("a-horas", "atrasado"))
+        n_atrasado  = sum(1 for p in prescs if p == "atrasado")
+        n_nao_veio  = sum(1 for p in prescs if p == "nao-veio")
+        pct_presenca = round(n_presente  / total_ensaios * 100) if total_ensaios else 0
+        pct_atraso   = round(n_atrasado  / n_presente   * 100) if n_presente    else 0
+        pct_falta    = round(n_nao_veio  / total_ensaios * 100) if total_ensaios else 0
+        stats.append({
+            "elem": e,
+            "n_presente": n_presente,
+            "n_atrasado": n_atrasado,
+            "n_nao_veio": n_nao_veio,
+            "total_ensaios": total_ensaios,
+            "pct_presenca": pct_presenca,
+            "pct_atraso":   pct_atraso,
+            "pct_falta":    pct_falta,
+        })
+
+    return render_template("estatisticas.html", stats=stats,
+                           total_ensaios=total_ensaios,
+                           hierarquia=HIERARQUIA)
+
+@app.route("/estatisticas/<int:elem_id>")
+@login_required
+def estatisticas_membro(elem_id):
+    with get_db() as con:
+        elem          = con.execute("SELECT * FROM elementos WHERE id=?", (elem_id,)).fetchone()
+        ensaios_lista = con.execute("SELECT * FROM ensaios ORDER BY data DESC").fetchall()
+        prescs        = con.execute(
+            "SELECT ensaio_id, estado FROM presencas WHERE elemento_id=?", (elem_id,)
+        ).fetchall()
+
+    if not elem:
+        return redirect(url_for("estatisticas"))
+
+    presc_map     = {p["ensaio_id"]: p for p in prescs}
+    total_ensaios = len(ensaios_lista)
+    n_a_horas     = sum(1 for p in prescs if p["estado"] == "a-horas")
+    n_atrasado    = sum(1 for p in prescs if p["estado"] == "atrasado")
+    n_nao_veio    = sum(1 for p in prescs if p["estado"] == "nao-veio")
+    n_presente    = n_a_horas + n_atrasado
+
+    pct_presenca = round(n_presente / total_ensaios * 100) if total_ensaios else 0
+    pct_ahoras   = round(n_a_horas  / total_ensaios * 100) if total_ensaios else 0
+    pct_atraso   = round(n_atrasado / total_ensaios * 100) if total_ensaios else 0
+    pct_falta    = round(n_nao_veio / total_ensaios * 100) if total_ensaios else 0
+
+    hist_ensaios = []
+    for ens in ensaios_lista:
+        p = presc_map.get(ens["id"], None)
+        try:
+            d = datetime.strptime(ens["data"], "%Y-%m-%d")
+            dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+            titulo = f"{dias[d.weekday()]} {d.strftime('%d/%m/%Y')}"
+        except Exception:
+            titulo = ens["data"]
+        hist_ensaios.append({"ens": ens, "titulo": titulo, "presc": p})
+
+    return render_template("estatisticas_membro.html",
+                           elem=elem,
+                           hist_ensaios=hist_ensaios,
+                           total_ensaios=total_ensaios,
+                           n_a_horas=n_a_horas,
+                           n_atrasado=n_atrasado,
+                           n_nao_veio=n_nao_veio,
+                           n_presente=n_presente,
+                           pct_presenca=pct_presenca,
+                           pct_ahoras=pct_ahoras,
+                           pct_atraso=pct_atraso,
+                           pct_falta=pct_falta)
 
 if __name__ == "__main__":
     init_db()

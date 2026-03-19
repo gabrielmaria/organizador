@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ elem.nome }} — Stats{% endblock %}
+{% block head %}
+<style>
+.ring-container { display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem }
+.ring-card{
+  flex:1;min-width:110px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:1rem;text-align:center;
+}
+.ring-svg    { display:block;margin:0 auto .5rem }
+.ring-label  { font-size:12px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.5px }
+.ring-sub    { font-size:11px;color:var(--text3);margin-top:2px }
+
+.hist-item{
+  display:flex;align-items:center;padding:.65rem .75rem;
+  border-bottom:1px solid var(--border);font-size:14px;
+}
+.hist-item:last-child { border-bottom:none }
+.hist-nome { flex:1;color:var(--text2) }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.25rem">
+  <div style="flex:1">
+    <h1 style="font-size:20px;font-weight:700">{{ elem.nome }}</h1>
+    <span class="muted">{{ elem.categoria }}</span>
+  </div>
+  <a href="{{ url_for('estatisticas') }}" class="btn btn-sm">← Stats</a>
+</div>
+
+{% macro ring(pct, color, label, sub) %}
+<div class="ring-card">
+  <svg class="ring-svg" width="76" height="76" viewBox="0 0 76 76">
+    <circle cx="38" cy="38" r="30" fill="none" stroke="var(--bg)" stroke-width="8"/>
+    <circle cx="38" cy="38" r="30" fill="none" stroke="{{ color }}" stroke-width="8"
+            stroke-dasharray="{{ (pct / 100 * 188.5) | round(1) }} 188.5"
+            stroke-dashoffset="47.12" stroke-linecap="round"
+            transform="rotate(-90 38 38)"/>
+    <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">{{ pct }}%</text>
+  </svg>
+  <div class="ring-label">{{ label }}</div>
+  <div class="ring-sub">{{ sub }}</div>
+</div>
+{% endmacro %}
+
+<div class="ring-container">
+  {{ ring(pct_presenca, 'var(--green-border)', 'Presença', n_presente ~ '/' ~ total_ensaios ~ ' ensaios') }}
+  {{ ring(pct_ahoras,   'var(--green-border)', 'A horas',  n_a_horas ~ ' vez' ~ ('es' if n_a_horas != 1 else '')) }}
+  {{ ring(pct_atraso,   'var(--amber-border)', 'Atrasos',  n_atrasado ~ ' vez' ~ ('es' if n_atrasado != 1 else '')) }}
+  {{ ring(pct_falta,    'var(--red-border)',   'Faltas',   n_nao_veio ~ ' vez' ~ ('es' if n_nao_veio != 1 else '')) }}
+</div>
+
+<!-- Histórico ensaios -->
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+  Histórico de ensaios
+</div>
+<div class="card" style="padding:.5rem">
+  {% for item in hist_ensaios %}
+  {% set p      = item.presc %}
+  {% set estado = p.get('estado','sem-registo') if p else 'sem-registo' %}
+  <div class="hist-item">
+    <span class="hist-nome">{{ item.titulo }}</span>
+    {% if estado == 'a-horas' %}
+      <span class="badge badge-ahoras">✓ A horas</span>
+    {% elif estado == 'atrasado' %}
+      <span class="badge badge-atrasado">⏱ Atrasado</span>
+    {% elif estado == 'nao-veio' %}
+      <span class="badge badge-naoveio">✗ Não veio</span>
+    {% else %}
+      <span class="badge badge-semregisto">—</span>
+    {% endif %}
+  </div>
+  {% else %}
+  <div style="padding:2rem;text-align:center;color:var(--text3)">Nenhum ensaio registado ainda.</div>
+  {% endfor %}
+</div>
+
+{% endblock %}

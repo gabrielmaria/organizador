@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block head %}
+<style>
+.membro-card{
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--radius-lg);padding:.9rem 1rem;
+  margin-bottom:.5rem;transition:.2s;
+}
+.membro-card.estado-a-horas  { border-color:var(--green-border); background:var(--green-bg) }
+.membro-card.estado-atrasado { border-color:var(--amber-border); background:var(--amber-bg) }
+.membro-card.estado-nao-veio { border-color:var(--red-border);   background:var(--red-bg); opacity:.7 }
+
+.membro-nome { font-weight:600; font-size:15px }
+
+.estado-btns { display:flex; gap:6px; flex-wrap:wrap; margin-top:.6rem }
+.estado-btn{
+  padding:7px 16px; border-radius:20px; font-size:14px; font-weight:500;
+  border:1.5px solid var(--border2); background:var(--card); color:var(--text2);
+  cursor:pointer; transition:.15s; -webkit-tap-highlight-color:transparent;
+}
+.estado-btn.active-a-horas  { background:var(--green-bg); color:var(--green); border-color:var(--green-border) }
+.estado-btn.active-atrasado { background:var(--amber-bg); color:var(--amber); border-color:var(--amber-border) }
+.estado-btn.active-nao-veio { background:var(--red-bg);   color:var(--red);   border-color:var(--red-border)   }
+
+.stat-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:20px;font-size:14px;font-weight:600;margin:.25rem
+}
+.stat-verde { background:var(--green-bg); color:var(--green) }
+.stat-amber { background:var(--amber-bg); color:var(--amber) }
+.stat-red   { background:var(--red-bg);   color:var(--red)   }
+.stat-grey  { background:var(--bg);       color:var(--text3) }
+
+.saved-indicator{
+  position:fixed;top:62px;right:1rem;
+  background:#1a1a18;color:#fff;
+  padding:6px 14px;border-radius:20px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:opacity .3s;
+  z-index:200;pointer-events:none;
+}
+.saved-indicator.show{ opacity:1 }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="saved-indicator" id="saved-ind">✓ Guardado</div>
+
+<div class="row" style="margin-bottom:1rem">
+  <div style="flex:1;min-width:0">
+    <h1 style="font-size:18px;font-weight:700">{{ titulo }}</h1>
+    <span class="muted">{{ ensaio.criado }}</span>
+  </div>
+  <a href="{{ url_for('ensaios') }}" class="btn btn-sm">← Voltar</a>
+</div>
+
+<!-- Totais -->
+<div style="display:flex;flex-wrap:wrap;margin-bottom:1.25rem">
+  <span class="stat-pill stat-verde">✓ A horas: <strong id="cnt-ahoras">{{ totais['a-horas'] }}</strong></span>
+  <span class="stat-pill stat-amber">⏱ Atrasados: <strong id="cnt-atrasado">{{ totais['atrasado'] }}</strong></span>
+  <span class="stat-pill stat-red">✗ Faltaram: <strong id="cnt-naoveio">{{ totais['nao-veio'] }}</strong></span>
+  <span class="stat-pill stat-grey">— Sem registo: <strong id="cnt-semregisto">{{ totais['sem-registo'] }}</strong></span>
+</div>
+
+{% for cat in hierarquia %}
+{% set membros_cat = elementos | selectattr('categoria', 'equalto', cat) | list %}
+{% if membros_cat %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:.75rem 0 .4rem;padding:0 .25rem">
+  {{ cat }}s
+</div>
+{% for elem in membros_cat %}
+{% set presc        = presc_map.get(elem.id, {}) %}
+{% set estado_atual = presc.get('estado','sem-registo') if presc else 'sem-registo' %}
+<div class="membro-card estado-{{ estado_atual }}" id="card-{{ elem.id }}">
+  <div class="membro-nome">{{ elem.nome }}</div>
+  <div class="estado-btns">
+    <button class="estado-btn {% if estado_atual == 'a-horas'  %}active-a-horas{% endif %}"
+            onclick="setEstado(this,'a-horas',{{ elem.id }})">✓ A horas</button>
+    <button class="estado-btn {% if estado_atual == 'atrasado' %}active-atrasado{% endif %}"
+            onclick="setEstado(this,'atrasado',{{ elem.id }})">⏱ Atrasado</button>
+    <button class="estado-btn {% if estado_atual == 'nao-veio' %}active-nao-veio{% endif %}"
+            onclick="setEstado(this,'nao-veio',{{ elem.id }})">✗ Não veio</button>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+<script>
+const ENSAIO_ID = {{ ensaio.id }};
+
+function setEstado(btn, novoEstado, elemId) {
+  const card = document.getElementById('card-' + elemId);
+  const btns = card.querySelectorAll('.estado-btn');
+  const jaAtivo = btn.classList.contains('active-' + novoEstado);
+
+  btns.forEach(b => b.className = 'estado-btn');
+  card.className = 'membro-card';
+
+  const estado = jaAtivo ? 'sem-registo' : novoEstado;
+
+  if (!jaAtivo) {
+    btn.classList.add('active-' + novoEstado);
+    card.classList.add('estado-' + novoEstado);
+  }
+
+  atualizarContadores();
+  guardar(elemId, estado);
+}
+
+function atualizarContadores() {
+  const c = {'a-horas':0,'atrasado':0,'nao-veio':0,'sem-registo':0};
+  document.querySelectorAll('.membro-card').forEach(card => {
+    const cls = [...card.classList].find(x => x.startsWith('estado-'));
+    if (cls) { const k = cls.replace('estado-',''); c[k] = (c[k]||0)+1; }
+  });
+  document.getElementById('cnt-ahoras').textContent     = c['a-horas'];
+  document.getElementById('cnt-atrasado').textContent   = c['atrasado'];
+  document.getElementById('cnt-naoveio').textContent    = c['nao-veio'];
+  document.getElementById('cnt-semregisto').textContent = c['sem-registo'];
+}
+
+async function guardar(elemId, estado) {
+  const fd = new FormData();
+  fd.append('elemento_id', elemId);
+  fd.append('estado', estado);
+  fd.append('hora', '');
+  fd.append('nota', '');
+  try {
+    await fetch('/ensaios/' + ENSAIO_ID + '/presenca', {
+      method:'POST', body:fd,
+      headers:{'X-Requested-With':'XMLHttpRequest'}
+    });
+    mostrarSaved();
+  } catch(e) { console.error(e); }
+}
+
+function mostrarSaved() {
+  const el = document.getElementById('saved-ind');
+  el.classList.add('show');
+  clearTimeout(window._t);
+  window._t = setTimeout(() => el.classList.remove('show'), 1400);
+}
+</script>
+{% endblock %}
