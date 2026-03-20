@@ -73,7 +73,8 @@ def init_db():
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             nome          TEXT UNIQUE NOT NULL,
             nome_whatsapp TEXT DEFAULT '',
-            categoria     TEXT DEFAULT 'Ali-Bobó'
+            categoria     TEXT DEFAULT 'Ali-Bobó',
+            ordem         INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS eventos (
             id     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,7 +108,12 @@ def init_db():
             FOREIGN KEY(elemento_id) REFERENCES elementos(id)
         );
         """)
-    for col in ["nome_whatsapp TEXT DEFAULT ''", "categoria TEXT DEFAULT 'Ali-Bobó'"]:
+    # migrações seguras para bases de dados existentes
+    for col in [
+        "nome_whatsapp TEXT DEFAULT ''",
+        "categoria TEXT DEFAULT 'Ali-Bobó'",
+        "ordem INTEGER DEFAULT 0",
+    ]:
         try:
             with get_db() as con:
                 con.execute(f"ALTER TABLE elementos ADD COLUMN {col}")
@@ -165,7 +171,9 @@ def index():
 @login_required
 def elementos():
     with get_db() as con:
-        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+        elems = con.execute(
+            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+        ).fetchall()
     return render_template("elementos.html", elementos=elems, hierarquia=HIERARQUIA)
 
 @app.route("/elementos/add", methods=["POST"])
@@ -174,12 +182,16 @@ def add_elemento():
     nome      = request.form.get("nome", "").strip()
     nwa       = request.form.get("nome_whatsapp", "").strip()
     categoria = request.form.get("categoria", "Ali-Bobó").strip()
+    try:
+        ordem = int(request.form.get("ordem", 0))
+    except ValueError:
+        ordem = 0
     if nome:
         try:
             with get_db() as con:
                 con.execute(
-                    "INSERT INTO elementos (nome, nome_whatsapp, categoria) VALUES (?,?,?)",
-                    (nome, nwa, categoria)
+                    "INSERT INTO elementos (nome, nome_whatsapp, categoria, ordem) VALUES (?,?,?,?)",
+                    (nome, nwa, categoria, ordem)
                 )
         except Exception:
             flash(f"'{nome}' ja existe.")
@@ -190,22 +202,36 @@ def add_elemento():
 def edit_elemento(eid):
     nwa       = request.form.get("nome_whatsapp", "").strip()
     categoria = request.form.get("categoria", "Ali-Bobó").strip()
+    try:
+        ordem = int(request.form.get("ordem", 0))
+    except ValueError:
+        ordem = 0
     with get_db() as con:
         con.execute(
-            "UPDATE elementos SET nome_whatsapp=?, categoria=? WHERE id=?",
-            (nwa, categoria, eid)
+            "UPDATE elementos SET nome_whatsapp=?, categoria=?, ordem=? WHERE id=?",
+            (nwa, categoria, ordem, eid)
         )
     return redirect(url_for("elementos"))
 
 @app.route("/elementos/del/<int:eid>", methods=["POST"])
 @login_required
-
 def del_elemento(eid):
     with get_db() as con:
         con.execute("DELETE FROM presencas WHERE elemento_id=?", (eid,))
         con.execute("DELETE FROM respostas WHERE elemento_id=?", (eid,))
         con.execute("DELETE FROM elementos WHERE id=?", (eid,))
     return redirect(url_for("elementos"))
+
+@app.route("/elementos/reordenar", methods=["POST"])
+@login_required
+def reordenar_elementos():
+    """Recebe JSON: {"ids": [3, 1, 5, 2, ...]} — ordem dentro de UMA categoria."""
+    data = request.get_json()
+    ids  = data.get("ids", [])
+    with get_db() as con:
+        for i, eid in enumerate(ids):
+            con.execute("UPDATE elementos SET ordem=? WHERE id=?", (i, eid))
+    return jsonify({"ok": True})
 
 # ── Eventos ───────────────────────────────────────────────────────────────────
 
@@ -240,7 +266,9 @@ def del_evento(eid):
 def evento(eid):
     with get_db() as con:
         ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
-        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+        elems = con.execute(
+            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+        ).fetchall()
         resps = con.execute(
             "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
         ).fetchall()
@@ -373,7 +401,9 @@ def importar_csv_update(eid):
 def tabela(eid):
     with get_db() as con:
         ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
-        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+        elems = con.execute(
+            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+        ).fetchall()
         resps = con.execute(
             "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
         ).fetchall()
@@ -432,7 +462,9 @@ def del_ensaio(eid):
 def ensaio_detail(eid):
     with get_db() as con:
         ensaio = con.execute("SELECT * FROM ensaios WHERE id=?", (eid,)).fetchone()
-        elems  = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
+        elems  = con.execute(
+            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+        ).fetchall()
         prescs = con.execute(
             "SELECT elemento_id, estado, hora, nota FROM presencas WHERE ensaio_id=?", (eid,)
         ).fetchall()
@@ -483,8 +515,10 @@ def set_presenca(eid):
 @login_required
 def estatisticas():
     with get_db() as con:
-        elems         = con.execute("SELECT * FROM elementos ORDER BY categoria, nome").fetchall()
-        total_ensaios = con.execute("SELECT COUNT(*) as n FROM ensaios").fetchone()["n"]
+        elems           = con.execute(
+            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+        ).fetchall()
+        total_ensaios   = con.execute("SELECT COUNT(*) as n FROM ensaios").fetchone()["n"]
         presencas_todas = con.execute("SELECT elemento_id, estado FROM presencas").fetchall()
 
     presc_por_elem = {}
@@ -493,22 +527,22 @@ def estatisticas():
 
     stats = []
     for e in elems:
-        prescs      = presc_por_elem.get(e["id"], [])
-        n_presente  = sum(1 for p in prescs if p in ("a-horas", "atrasado"))
-        n_atrasado  = sum(1 for p in prescs if p == "atrasado")
-        n_nao_veio  = sum(1 for p in prescs if p == "nao-veio")
-        pct_presenca = round(n_presente  / total_ensaios * 100) if total_ensaios else 0
-        pct_atraso   = round(n_atrasado  / n_presente   * 100) if n_presente    else 0
-        pct_falta    = round(n_nao_veio  / total_ensaios * 100) if total_ensaios else 0
+        prescs       = presc_por_elem.get(e["id"], [])
+        n_presente   = sum(1 for p in prescs if p in ("a-horas", "atrasado"))
+        n_atrasado   = sum(1 for p in prescs if p == "atrasado")
+        n_nao_veio   = sum(1 for p in prescs if p == "nao-veio")
+        pct_presenca = round(n_presente / total_ensaios * 100) if total_ensaios else 0
+        pct_atraso   = round(n_atrasado / n_presente   * 100) if n_presente    else 0
+        pct_falta    = round(n_nao_veio / total_ensaios * 100) if total_ensaios else 0
         stats.append({
             "elem": e,
-            "n_presente": n_presente,
-            "n_atrasado": n_atrasado,
-            "n_nao_veio": n_nao_veio,
+            "n_presente":    n_presente,
+            "n_atrasado":    n_atrasado,
+            "n_nao_veio":    n_nao_veio,
             "total_ensaios": total_ensaios,
-            "pct_presenca": pct_presenca,
-            "pct_atraso":   pct_atraso,
-            "pct_falta":    pct_falta,
+            "pct_presenca":  pct_presenca,
+            "pct_atraso":    pct_atraso,
+            "pct_falta":     pct_falta,
         })
 
     return render_template("estatisticas.html", stats=stats,
@@ -545,7 +579,7 @@ def estatisticas_membro(elem_id):
         p = presc_map.get(ens["id"], None)
         try:
             d = datetime.strptime(ens["data"], "%Y-%m-%d")
-            dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+            dias  = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
             titulo = f"{dias[d.weekday()]} {d.strftime('%d/%m/%Y')}"
         except Exception:
             titulo = ens["data"]
