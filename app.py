@@ -299,7 +299,7 @@ def evento(eid):
     opcoes   = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
     resp_map = {}
     for r in resps:
-        resp_map.setdefault(r["elemento_id"], set()).add(r["opcao"])
+        if r["opcao"] not in resp_map.setdefault(r["elemento_id"], []): resp_map[r["elemento_id"]].append(r["opcao"])
     return render_template("evento.html", ev=ev, elementos=elems,
                            opcoes=opcoes, resp_map=resp_map, hierarquia=HIERARQUIA)
 
@@ -439,7 +439,7 @@ def tabela(eid):
     opcoes   = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
     resp_map = {}
     for r in resps:
-        resp_map.setdefault(r["elemento_id"], set()).add(r["opcao"])
+        if r["opcao"] not in resp_map.setdefault(r["elemento_id"], []): resp_map[r["elemento_id"]].append(r["opcao"])
     totais   = {op: sum(1 for v in resp_map.values() if op in v) for op in opcoes}
     sem_resp = sum(1 for e in elems if e["id"] not in resp_map)
     xeques   = [e for e in elems if e["categoria"] == "Xeque"]

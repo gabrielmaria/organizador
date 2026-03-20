@@ -68,7 +68,7 @@
   </div>
   <div class="membros-grid">
     {% for elem in elementos %}
-    {% set marcado = op in resp_map.get(elem.id, set()) %}
+    {% set marcado = op in resp_map.get(elem.id, []) %}
     <button
       class="membro-btn {% if marcado %}sel-ativo{% endif %}"
       data-elem="{{ elem.id }}"

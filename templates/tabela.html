@@ -2,7 +2,7 @@
 {% block title %}Tabela — {{ ev.nome }}{% endblock %}
 
 {% macro badges(elem) %}
-  {% set resps = resp_map.get(elem.id, set()) %}
+  {% set resps = resp_map.get(elem.id, []) %}
   {% if resps %}
     {% for op in opcoes %}
       {% if op in resps %}
