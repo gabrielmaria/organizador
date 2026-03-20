@@ -199,8 +199,11 @@ def edit_elemento(eid):
 
 @app.route("/elementos/del/<int:eid>", methods=["POST"])
 @login_required
+
 def del_elemento(eid):
     with get_db() as con:
+        con.execute("DELETE FROM presencas WHERE elemento_id=?", (eid,))
+        con.execute("DELETE FROM respostas WHERE elemento_id=?", (eid,))
         con.execute("DELETE FROM elementos WHERE id=?", (eid,))
     return redirect(url_for("elementos"))
 
