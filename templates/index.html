@@ -1,5 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Eventos — Desertuna{% endblock %}
+{% block title %}Eventos — Tuna{% endblock %}
+{% block head %}
+<style>
+.data-pill {
+  display:inline-flex;align-items:center;
+  font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;
+}
+.data-hoje    { background:#fef9c3;color:#854d0e }
+.data-semana  { background:var(--green-bg);color:var(--green) }
+.data-passado { background:var(--bg);color:var(--text3) }
+.data-futuro  { background:var(--blue-bg);color:var(--blue) }
+</style>
+{% endblock %}
 {% block content %}
 
 <div class="row" style="margin-bottom:1.25rem">
@@ -8,10 +20,10 @@
   <a href="{{ url_for('novo_evento') }}" class="btn btn-sm">+ Manual</a>
 </div>
 
-<!-- Importar CSV para criar evento novo -->
+<!-- Importar CSV -->
 <div class="card" style="margin-bottom:1rem">
   <div class="card-title">📥 Criar evento a partir do CSV</div>
-  <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui. O evento é criado automaticamente com o título, opções e votos.</p>
+  <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui.</p>
   <form method="post" action="{{ url_for('importar_csv_novo') }}" enctype="multipart/form-data">
     <div class="row">
       <input type="file" name="csv_file" accept=".csv" style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px;background:var(--card);color:var(--text)">
@@ -22,11 +34,20 @@
 
 {% if eventos %}
 {% for ev in eventos %}
-<div class="card" style="padding:1rem">
+{% set prox_class = ev.nome | proximidade_class %}
+{% set prox_label = ev.nome | proximidade_label %}
+<div class="card" style="padding:1rem{% if prox_class == 'data-semana' %};border-left:3px solid var(--green-border){% elif prox_class == 'data-hoje' %};border-left:3px solid #ca8a04{% endif %}">
   <div class="row">
     <div style="flex:1;min-width:0">
-      <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.nome }}</div>
-      <div class="muted">{{ ev.criado }}</div>
+      <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        {{ ev.nome }}
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-top:3px">
+        <span class="muted">{{ ev.criado }}</span>
+        {% if prox_label %}
+        <span class="data-pill {{ prox_class }}">{{ prox_label }}</span>
+        {% endif %}
+      </div>
     </div>
     <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Editar</a>
     <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>

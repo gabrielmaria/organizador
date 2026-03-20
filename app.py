@@ -77,10 +77,11 @@ def init_db():
             ordem         INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS eventos (
-            id     INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome   TEXT NOT NULL,
-            opcoes TEXT NOT NULL,
-            criado TEXT NOT NULL
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome        TEXT NOT NULL,
+            opcoes      TEXT NOT NULL,
+            criado      TEXT NOT NULL,
+            data_evento TEXT DEFAULT ''
         );
         CREATE TABLE IF NOT EXISTS respostas (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,6 +121,13 @@ def init_db():
         except Exception:
             pass
 
+    # migração: adicionar data_evento à tabela eventos
+    try:
+        with get_db() as con:
+            con.execute("ALTER TABLE eventos ADD COLUMN data_evento TEXT DEFAULT ''")
+    except Exception:
+        pass
+
     # migração: recriar tabela respostas com UNIQUE(evento_id, elemento_id, opcao)
     # para suportar múltiplas opções por pessoa
     try:
@@ -150,6 +158,58 @@ def format_date_filter(data_str):
         return f"{dias[d.weekday()]}, {d.strftime('%d/%m/%Y')}"
     except Exception:
         return data_str
+
+
+# Meses em português para extração de datas dos nomes de eventos
+_MESES = {
+    "jan":1,"fev":2,"mar":3,"abr":4,"mai":5,"jun":6,
+    "jul":7,"ago":8,"set":9,"out":10,"nov":11,"dez":12,
+    "january":1,"february":2,"march":3,"april":4,"may":5,"june":6,
+    "july":7,"august":8,"september":9,"october":10,"november":11,"december":12,
+}
+
+def extrair_data_nome(nome):
+    """Tenta extrair uma data de um nome de evento como '27/MAR', '14/JUN', '(29/Mar, Domingo)' etc.
+    Devolve um objeto date ou None."""
+    import re
+    nome_lower = nome.lower()
+    # padrão: número/mês (ex: 27/mar, 14/jun, 29/mar)
+    m = re.search(r'(\d{1,2})[/\-\.](\w{3,})', nome_lower)
+    if m:
+        dia = int(m.group(1))
+        mes_str = m.group(2)[:3]
+        mes = _MESES.get(mes_str)
+        if mes:
+            ano = date.today().year
+            # se o mês já passou este ano, provavelmente é do próximo
+            try:
+                d = date(ano, mes, dia)
+                if d < date.today() - __import__('datetime').timedelta(days=30):
+                    d = date(ano + 1, mes, dia)
+                return d
+            except Exception:
+                pass
+    return None
+
+@app.template_filter('proximidade_class')
+def proximidade_class_filter(ev_nome):
+    d = extrair_data_nome(ev_nome)
+    if not d: return "data-futuro"
+    diff = (d - date.today()).days
+    if diff < 0:  return "data-passado"
+    if diff == 0: return "data-hoje"
+    if diff <= 7: return "data-semana"
+    return "data-futuro"
+
+@app.template_filter('proximidade_label')
+def proximidade_label_filter(ev_nome):
+    d = extrair_data_nome(ev_nome)
+    if not d: return ""
+    diff = (d - date.today()).days
+    if diff < 0:  return f"há {-diff}d"
+    if diff == 0: return "hoje"
+    if diff == 1: return "amanhã"
+    return f"daqui a {diff}d"
 
 with app.app_context():
     init_db()
@@ -184,7 +244,12 @@ def logout():
 @login_required
 def index():
     with get_db() as con:
-        eventos = con.execute("SELECT * FROM eventos ORDER BY id DESC").fetchall()
+        eventos_raw = con.execute("SELECT * FROM eventos").fetchall()
+    # ordenar por data extraída do nome (eventos sem data detectável ficam no fim)
+    def sort_key(ev):
+        d = extrair_data_nome(ev["nome"])
+        return d if d else date(9999, 12, 31)
+    eventos = sorted(eventos_raw, key=sort_key)
     return render_template("index.html", eventos=eventos)
 
 # ── Elementos ─────────────────────────────────────────────────────────────────

@@ -1,14 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Novo Evento — Desertuna{% endblock %}
+{% block title %}Novo Evento — Tuna{% endblock %}
 {% block content %}
-<h1>Novo evento</h1>
+<h1 style="font-size:20px;font-weight:700;margin-bottom:1rem">Novo evento</h1>
 <div class="card">
   <form method="post">
     <label>Nome do evento</label>
     <input type="text" name="nome" placeholder="Ex: 14/JUN - Festas de Santo António" style="margin-bottom:1rem">
+    <p class="muted" style="margin-bottom:1rem;font-size:12px">💡 Inclui a data no nome (ex: <strong>27/MAR</strong>) para ordenação automática na lista.</p>
     <label>Opções de resposta (uma por linha)</label>
-    <textarea name="opcoes" placeholder="Sim&#10;Não&#10;Levo Carro"></textarea>
-    <div style="margin-top:1rem;display:flex;gap:.5rem">
+    <textarea name="opcoes" placeholder="Sim&#10;Não&#10;Levo Carro" style="margin-bottom:1rem"></textarea>
+    <div style="display:flex;gap:.5rem">
       <button class="btn btn-primary">Criar evento</button>
       <a href="{{ url_for('index') }}" class="btn">Cancelar</a>
     </div>

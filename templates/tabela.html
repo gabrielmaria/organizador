@@ -1,5 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Tabela — {{ ev.nome }}{% endblock %}
+{% block head %}
+<style>
+.filter-bar { display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem }
+.filter-btn {
+  padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;
+  cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);
+  transition:.15s;-webkit-tap-highlight-color:transparent;
+}
+.filter-btn:hover { background:var(--bg) }
+.filter-btn.active { background:var(--blue);color:#fff;border-color:var(--blue) }
+.membro-row { transition:.15s }
+.membro-row.hidden { display:none }
+</style>
+{% endblock %}
 
 {% macro badges(elem) %}
   {% set resps = resp_map.get(elem.id, []) %}
@@ -40,12 +54,25 @@
   </div>
 </div>
 
+<!-- Filtros -->
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filtrar(this, null)">Todos</button>
+  {% for op in opcoes %}
+  <button class="filter-btn" onclick="filtrar(this, {{ op | tojson }})">{{ op }}</button>
+  {% endfor %}
+  <button class="filter-btn" onclick="filtrar(this, '__sem_resposta__')">Sem resposta</button>
+</div>
+
 <!-- Tabela Xeques -->
 {% if xeques %}
 <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Xeques</div>
-<div class="card" style="padding:.5rem;margin-bottom:1rem">
+<div class="card" style="padding:.5rem;margin-bottom:1rem" id="grupo-xeques">
   {% for elem in xeques %}
-  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
+  {% set resps = resp_map.get(elem.id, []) %}
+  <div class="membro-row"
+       data-opcoes="{{ resps | join(',') }}"
+       data-sem="{{ 'true' if not resps else 'false' }}"
+       style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
     <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
     <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">
       {{ badges(elem) }}
@@ -58,15 +85,19 @@
 <!-- Tabela Camelos + Ali-Bobós -->
 {% if membros %}
 <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Camelos &amp; Ali-Bobós</div>
-<div class="card" style="padding:.5rem">
+<div class="card" style="padding:.5rem" id="grupo-membros">
   {% for cat in ["Camelo", "Ali-Bobó"] %}
   {% set membros_cat = membros | selectattr('categoria', 'equalto', cat) | list %}
   {% if membros_cat %}
-  <div style="padding:.4rem .75rem;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-radius:6px;margin:.25rem 0">
+  <div class="cat-header" style="padding:.4rem .75rem;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-radius:6px;margin:.25rem 0">
     {{ cat }}s
   </div>
   {% for elem in membros_cat %}
-  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:1px solid var(--border)">
+  {% set resps = resp_map.get(elem.id, []) %}
+  <div class="membro-row"
+       data-opcoes="{{ resps | join(',') }}"
+       data-sem="{{ 'true' if not resps else 'false' }}"
+       style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:1px solid var(--border)">
     <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
     <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">
       {{ badges(elem) }}
@@ -78,4 +109,34 @@
 </div>
 {% endif %}
 
+<script>
+function filtrar(btn, opcao) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.membro-row').forEach(row => {
+    if (opcao === null) {
+      row.classList.remove('hidden');
+    } else if (opcao === '__sem_resposta__') {
+      row.classList.toggle('hidden', row.dataset.sem !== 'true');
+    } else {
+      const opcoes = row.dataset.opcoes.split(',').map(s => s.trim()).filter(Boolean);
+      row.classList.toggle('hidden', !opcoes.includes(opcao));
+    }
+  });
+
+  // esconder cabeçalhos de categoria se todos os membros estiverem ocultos
+  document.querySelectorAll('.cat-header').forEach(header => {
+    let next = header.nextElementSibling;
+    let temVisiveis = false;
+    while (next && !next.classList.contains('cat-header')) {
+      if (!next.classList.contains('hidden') && next.classList.contains('membro-row')) {
+        temVisiveis = true; break;
+      }
+      next = next.nextElementSibling;
+    }
+    header.style.display = temVisiveis ? '' : 'none';
+  });
+}
+</script>
 {% endblock %}
