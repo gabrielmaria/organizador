@@ -16,12 +16,8 @@
 .membro-btn:hover{border-color:var(--border2);background:var(--bg)}
 .membro-btn:active{transform:scale(.96)}
 .membro-btn .dot{width:10px;height:10px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:.15s}
-.membro-btn.sel-sim{border-color:var(--green-border);background:var(--green-bg);color:var(--green)}
-.membro-btn.sel-sim .dot{background:var(--green-border)}
-.membro-btn.sel-nao{border-color:var(--red-border);background:var(--red-bg);color:var(--red)}
-.membro-btn.sel-nao .dot{background:var(--red-border)}
-.membro-btn.sel-talvez{border-color:var(--amber-border);background:var(--amber-bg);color:var(--amber)}
-.membro-btn.sel-talvez .dot{background:var(--amber-border)}
+.membro-btn.sel-ativo{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
+.membro-btn.sel-ativo .dot{background:var(--blue)}
 .save-bar{
   position:sticky;bottom:1rem;
   background:var(--blue);color:#fff;
@@ -62,22 +58,22 @@
 
 <!-- Registo manual por opção -->
 {% for op in opcoes %}
-<div class="card opcao-section">
+<div class="card opcao-section" data-opcao="{{ op }}">
   <div class="opcao-header">
-    <span class="badge badge-{{ op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') }}" style="font-size:15px;padding:5px 14px">{{ op }}</span>
-    <span class="muted" id="count-{{ loop.index }}">
-      {{ resp_map.values() | selectattr('__eq__', 'equalto', op) | list | length }} selecionados
+    <span class="badge badge-{{ op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') }}"
+          style="font-size:15px;padding:5px 14px">{{ op }}</span>
+    <span class="muted count-label">
+      {{ elementos | selectattr('id', 'in', resp_map.keys()) | list | selectattr('id') | list | length }} selecionados
     </span>
   </div>
   <div class="membros-grid">
     {% for elem in elementos %}
-    {% set resp = resp_map.get(elem.id, '') %}
-    {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+    {% set marcado = op in resp_map.get(elem.id, set()) %}
     <button
-      class="membro-btn {% if resp == op %}sel-{{ slug }}{% endif %}"
+      class="membro-btn {% if marcado %}sel-ativo{% endif %}"
       data-elem="{{ elem.id }}"
       data-opcao="{{ op }}"
-      data-slug="{{ slug }}"
+      data-marcado="{{ 'true' if marcado else 'false' }}"
       onclick="toggleMembro(this)">
       <span class="dot"></span>
       {{ elem.nome }}
@@ -93,27 +89,21 @@
 </button>
 
 <script>
+// alteracoes = { "elemId|opcao": { elemId, opcao, ativo } }
 const alteracoes = {};
 
-function slugify(s) {
-  return s.toLowerCase().replace(/ /g,'').replace(/ã/g,'a').replace(/é/g,'e').replace(/á/g,'a').replace(/ê/g,'e').replace(/ó/g,'o').replace(/ú/g,'u').replace(/í/g,'i').replace(/ç/g,'c').replace(/ô/g,'o');
-}
-
 function toggleMembro(btn) {
-  const elemId = btn.dataset.elem;
-  const opcao  = btn.dataset.opcao;
-  const slug   = btn.dataset.slug;
-  const jaSelec = btn.classList.contains('sel-' + slug);
+  const elemId  = btn.dataset.elem;
+  const opcao   = btn.dataset.opcao;
+  const jaAtivo = btn.classList.contains('sel-ativo');
+  const key     = elemId + '|' + opcao;
 
-  document.querySelectorAll(`.membro-btn[data-elem="${elemId}"]`).forEach(b => {
-    b.classList.remove('sel-' + b.dataset.slug);
-  });
-
-  if (jaSelec) {
-    alteracoes[elemId] = '';
+  if (jaAtivo) {
+    btn.classList.remove('sel-ativo');
+    alteracoes[key] = { elemId, opcao, ativo: '0' };
   } else {
-    btn.classList.add('sel-' + slug);
-    alteracoes[elemId] = opcao;
+    btn.classList.add('sel-ativo');
+    alteracoes[key] = { elemId, opcao, ativo: '1' };
   }
 
   atualizarContadores();
@@ -122,24 +112,25 @@ function toggleMembro(btn) {
 
 function atualizarContadores() {
   document.querySelectorAll('.opcao-section').forEach(sec => {
-    const total = sec.querySelectorAll('.membro-btn[class*="sel-"]').length;
-    sec.querySelector('[id^="count-"]').textContent = total + ' selecionados';
+    const total = sec.querySelectorAll('.membro-btn.sel-ativo').length;
+    sec.querySelector('.count-label').textContent = total + ' selecionados';
   });
 }
 
 function atualizarBarra() {
   const n = Object.keys(alteracoes).length;
-  document.getElementById('save-count').textContent = n + (n === 1 ? ' alteracao' : ' alteracoes');
+  document.getElementById('save-count').textContent = n + (n === 1 ? ' alteração' : ' alterações');
   document.getElementById('save-bar').classList.toggle('hidden', n === 0);
 }
 
 async function guardarTudo() {
   document.getElementById('save-bar').textContent = 'A guardar...';
-  const promises = Object.entries(alteracoes).map(([elemId, opcao]) => {
+  const promises = Object.values(alteracoes).map(({ elemId, opcao, ativo }) => {
     const fd = new FormData();
     fd.append('elemento_id', elemId);
     fd.append('opcao', opcao);
-    return fetch('/eventos/{{ ev.id }}/resposta', {method:'POST', body:fd});
+    fd.append('ativo', ativo);
+    return fetch('/eventos/{{ ev.id }}/resposta', { method: 'POST', body: fd });
   });
   await Promise.all(promises);
   location.reload();

@@ -87,7 +87,7 @@ def init_db():
             evento_id   INTEGER NOT NULL,
             elemento_id INTEGER NOT NULL,
             opcao       TEXT NOT NULL,
-            UNIQUE(evento_id, elemento_id),
+            UNIQUE(evento_id, elemento_id, opcao),
             FOREIGN KEY(evento_id)   REFERENCES eventos(id),
             FOREIGN KEY(elemento_id) REFERENCES elementos(id)
         );
@@ -119,6 +119,28 @@ def init_db():
                 con.execute(f"ALTER TABLE elementos ADD COLUMN {col}")
         except Exception:
             pass
+
+    # migração: recriar tabela respostas com UNIQUE(evento_id, elemento_id, opcao)
+    # para suportar múltiplas opções por pessoa
+    try:
+        with get_db() as con:
+            con.executescript("""
+                CREATE TABLE IF NOT EXISTS respostas_new (
+                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    evento_id   INTEGER NOT NULL,
+                    elemento_id INTEGER NOT NULL,
+                    opcao       TEXT NOT NULL,
+                    UNIQUE(evento_id, elemento_id, opcao),
+                    FOREIGN KEY(evento_id)   REFERENCES eventos(id),
+                    FOREIGN KEY(elemento_id) REFERENCES elementos(id)
+                );
+                INSERT OR IGNORE INTO respostas_new (evento_id, elemento_id, opcao)
+                    SELECT evento_id, elemento_id, opcao FROM respostas;
+                DROP TABLE respostas;
+                ALTER TABLE respostas_new RENAME TO respostas;
+            """)
+    except Exception:
+        pass
 
 @app.template_filter('format_date')
 def format_date_filter(data_str):
@@ -275,7 +297,9 @@ def evento(eid):
     if not ev:
         return redirect(url_for("index"))
     opcoes   = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
-    resp_map = {r["elemento_id"]: r["opcao"] for r in resps}
+    resp_map = {}
+    for r in resps:
+        resp_map.setdefault(r["elemento_id"], set()).add(r["opcao"])
     return render_template("evento.html", ev=ev, elementos=elems,
                            opcoes=opcoes, resp_map=resp_map, hierarquia=HIERARQUIA)
 
@@ -284,14 +308,19 @@ def evento(eid):
 def set_resposta(eid):
     elem_id = request.form.get("elemento_id")
     opcao   = request.form.get("opcao", "").strip()
-    if elem_id:
+    ativo   = request.form.get("ativo", "1")  # "1" = marcar, "0" = desmarcar
+    if elem_id and opcao:
         with get_db() as con:
-            con.execute("""
-                INSERT INTO respostas (evento_id, elemento_id, opcao)
-                VALUES (?,?,?)
-                ON CONFLICT(evento_id, elemento_id)
-                DO UPDATE SET opcao=excluded.opcao
-            """, (eid, elem_id, opcao))
+            if ativo == "0":
+                con.execute(
+                    "DELETE FROM respostas WHERE evento_id=? AND elemento_id=? AND opcao=?",
+                    (eid, elem_id, opcao)
+                )
+            else:
+                con.execute("""
+                    INSERT OR IGNORE INTO respostas (evento_id, elemento_id, opcao)
+                    VALUES (?,?,?)
+                """, (eid, elem_id, opcao))
     return redirect(url_for("evento", eid=eid))
 
 # ── CSV helpers ───────────────────────────────────────────────────────────────
@@ -347,10 +376,8 @@ def aplicar_votos(evento_id, votos):
         if elem_id:
             with get_db() as con:
                 con.execute("""
-                    INSERT INTO respostas (evento_id, elemento_id, opcao)
+                    INSERT OR IGNORE INTO respostas (evento_id, elemento_id, opcao)
                     VALUES (?,?,?)
-                    ON CONFLICT(evento_id, elemento_id)
-                    DO UPDATE SET opcao=excluded.opcao
                 """, (evento_id, elem_id, voto["opcao"]))
             registados += 1
         else:
@@ -410,8 +437,10 @@ def tabela(eid):
     if not ev:
         return redirect(url_for("index"))
     opcoes   = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
-    resp_map = {r["elemento_id"]: r["opcao"] for r in resps}
-    totais   = {op: sum(1 for v in resp_map.values() if v == op) for op in opcoes}
+    resp_map = {}
+    for r in resps:
+        resp_map.setdefault(r["elemento_id"], set()).add(r["opcao"])
+    totais   = {op: sum(1 for v in resp_map.values() if op in v) for op in opcoes}
     sem_resp = sum(1 for e in elems if e["id"] not in resp_map)
     xeques   = [e for e in elems if e["categoria"] == "Xeque"]
     membros  = [e for e in elems if e["categoria"] != "Xeque"]
