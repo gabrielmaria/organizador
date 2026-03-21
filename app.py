@@ -74,7 +74,8 @@ def init_db():
             nome          TEXT UNIQUE NOT NULL,
             nome_whatsapp TEXT DEFAULT '',
             categoria     TEXT DEFAULT 'Ali-Bobó',
-            ordem         INTEGER DEFAULT 0
+            ordem         INTEGER DEFAULT 0,
+            ativo         INTEGER DEFAULT 1
         );
         CREATE TABLE IF NOT EXISTS eventos (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -114,6 +115,7 @@ def init_db():
         "nome_whatsapp TEXT DEFAULT ''",
         "categoria TEXT DEFAULT 'Ali-Bobó'",
         "ordem INTEGER DEFAULT 0",
+        "ativo INTEGER DEFAULT 1",
     ]:
         try:
             with get_db() as con:
@@ -258,10 +260,9 @@ def index():
 @login_required
 def elementos():
     with get_db() as con:
-        elems = con.execute(
-            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
-        ).fetchall()
-    return render_template("elementos.html", elementos=elems, hierarquia=HIERARQUIA)
+        elems   = con.execute("SELECT * FROM elementos WHERE ativo=1 ORDER BY categoria, ordem, nome").fetchall()
+        ex_memb = con.execute("SELECT * FROM elementos WHERE ativo=0 ORDER BY categoria, nome").fetchall()
+    return render_template("elementos.html", elementos=elems, ex_membros=ex_memb, hierarquia=HIERARQUIA)
 
 @app.route("/elementos/add", methods=["POST"])
 @login_required
@@ -303,6 +304,22 @@ def edit_elemento(eid):
 @app.route("/elementos/del/<int:eid>", methods=["POST"])
 @login_required
 def del_elemento(eid):
+    """Soft delete — marca como inativo para preservar registos históricos."""
+    with get_db() as con:
+        con.execute("UPDATE elementos SET ativo=0 WHERE id=?", (eid,))
+    return redirect(url_for("elementos"))
+
+@app.route("/elementos/reativar/<int:eid>", methods=["POST"])
+@login_required
+def reativar_elemento(eid):
+    with get_db() as con:
+        con.execute("UPDATE elementos SET ativo=1 WHERE id=?", (eid,))
+    return redirect(url_for("elementos"))
+
+@app.route("/elementos/apagar/<int:eid>", methods=["POST"])
+@login_required
+def apagar_elemento(eid):
+    """Hard delete — só para ex-membros, apaga tudo permanentemente."""
     with get_db() as con:
         con.execute("DELETE FROM presencas WHERE elemento_id=?", (eid,))
         con.execute("DELETE FROM respostas WHERE elemento_id=?", (eid,))
@@ -354,7 +371,7 @@ def evento(eid):
     with get_db() as con:
         ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
         elems = con.execute(
-            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+            "SELECT * FROM elementos WHERE ativo=1 ORDER BY categoria, ordem, nome"
         ).fetchall()
         resps = con.execute(
             "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
@@ -557,7 +574,7 @@ def ensaio_detail(eid):
     with get_db() as con:
         ensaio = con.execute("SELECT * FROM ensaios WHERE id=?", (eid,)).fetchone()
         elems  = con.execute(
-            "SELECT * FROM elementos ORDER BY categoria, ordem, nome"
+            "SELECT * FROM elementos WHERE ativo=1 ORDER BY categoria, ordem, nome"
         ).fetchall()
         prescs = con.execute(
             "SELECT elemento_id, estado, hora, nota FROM presencas WHERE ensaio_id=?", (eid,)

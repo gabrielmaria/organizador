@@ -35,6 +35,7 @@
   </form>
 </div>
 
+<!-- Membros ativos -->
 {% for cat in hierarquia %}
 {% set membros_cat = elementos | selectattr('categoria', 'equalto', cat) | list %}
 {% if membros_cat %}
@@ -48,8 +49,8 @@
       <span style="font-size:12px;font-weight:700;color:var(--text3);min-width:24px">{{ e.ordem }}</span>
       <span style="font-weight:600;flex:1">{{ e.nome }}</span>
       <form method="post" action="{{ url_for('del_elemento', eid=e.id) }}"
-            onsubmit="return confirm('Remover {{ e.nome }}?')">
-        <button class="btn btn-sm btn-danger">Remover</button>
+            onsubmit="return confirm('Marcar {{ e.nome }} como ex-membro? Os registos históricos são preservados.')">
+        <button class="btn btn-sm btn-danger">Saiu da tuna</button>
       </form>
     </div>
     <form method="post" action="{{ url_for('edit_elemento', eid=e.id) }}"
@@ -74,7 +75,35 @@
 {% endfor %}
 
 {% if not elementos %}
-<div class="card" style="text-align:center;padding:2rem;color:var(--text3)">Nenhum membro ainda.</div>
+<div class="card" style="text-align:center;padding:2rem;color:var(--text3)">Nenhum membro ativo ainda.</div>
+{% endif %}
+
+<!-- Ex-membros -->
+{% if ex_membros %}
+<div style="margin-top:1.5rem">
+  <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+    Ex-membros ({{ ex_membros | length }})
+  </div>
+  <div class="card" style="padding:.5rem">
+    {% for e in ex_membros %}
+    <div style="border-top:{% if not loop.first %}1px solid var(--border){% else %}none{% endif %};padding:.65rem .75rem;display:flex;align-items:center;gap:.75rem">
+      <span style="flex:1;color:var(--text2)">{{ e.nome }}</span>
+      <span class="muted" style="font-size:12px">{{ e.categoria }}</span>
+      <form method="post" action="{{ url_for('reativar_elemento', eid=e.id) }}">
+        <button class="btn btn-sm">↩ Reativar</button>
+      </form>
+      <form method="post" action="{{ url_for('apagar_elemento', eid=e.id) }}"
+            onsubmit="return confirm('Apagar {{ e.nome }} permanentemente? Isto remove todos os registos históricos.')">
+        <button class="btn btn-sm btn-danger">Apagar</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="muted" style="font-size:12px;padding:0 .25rem;margin-top:.4rem">
+    Os registos históricos de ex-membros são preservados nas tabelas e estatísticas.
+    "Apagar" remove tudo permanentemente.
+  </p>
+</div>
 {% endif %}
 
 {% endblock %}
