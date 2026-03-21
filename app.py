@@ -75,7 +75,8 @@ def init_db():
             nome_whatsapp TEXT DEFAULT '',
             categoria     TEXT DEFAULT 'Ali-Bobó',
             ordem         INTEGER DEFAULT 0,
-            ativo         INTEGER DEFAULT 1
+            ativo         INTEGER DEFAULT 1,
+            instrumento   TEXT DEFAULT ''
         );
         CREATE TABLE IF NOT EXISTS eventos (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,6 +117,7 @@ def init_db():
         "categoria TEXT DEFAULT 'Ali-Bobó'",
         "ordem INTEGER DEFAULT 0",
         "ativo INTEGER DEFAULT 1",
+        "instrumento TEXT DEFAULT ''",
     ]:
         try:
             with get_db() as con:
@@ -262,14 +264,16 @@ def elementos():
     with get_db() as con:
         elems   = con.execute("SELECT * FROM elementos WHERE ativo=1 ORDER BY categoria, ordem, nome").fetchall()
         ex_memb = con.execute("SELECT * FROM elementos WHERE ativo=0 ORDER BY categoria, nome").fetchall()
-    return render_template("elementos.html", elementos=elems, ex_membros=ex_memb, hierarquia=HIERARQUIA)
+    return render_template("elementos.html", elementos=elems, ex_membros=ex_memb,
+                           hierarquia=HIERARQUIA)
 
 @app.route("/elementos/add", methods=["POST"])
 @login_required
 def add_elemento():
-    nome      = request.form.get("nome", "").strip()
-    nwa       = request.form.get("nome_whatsapp", "").strip()
-    categoria = request.form.get("categoria", "Ali-Bobó").strip()
+    nome        = request.form.get("nome", "").strip()
+    nwa         = request.form.get("nome_whatsapp", "").strip()
+    categoria   = request.form.get("categoria", "Ali-Bobó").strip()
+    instrumento = request.form.get("instrumento", "").strip()
     try:
         ordem = int(request.form.get("ordem", 0))
     except ValueError:
@@ -278,8 +282,8 @@ def add_elemento():
         try:
             with get_db() as con:
                 con.execute(
-                    "INSERT INTO elementos (nome, nome_whatsapp, categoria, ordem) VALUES (?,?,?,?)",
-                    (nome, nwa, categoria, ordem)
+                    "INSERT INTO elementos (nome, nome_whatsapp, categoria, ordem, instrumento) VALUES (?,?,?,?,?)",
+                    (nome, nwa, categoria, ordem, instrumento)
                 )
         except Exception:
             flash(f"'{nome}' ja existe.")
@@ -288,16 +292,17 @@ def add_elemento():
 @app.route("/elementos/edit/<int:eid>", methods=["POST"])
 @login_required
 def edit_elemento(eid):
-    nwa       = request.form.get("nome_whatsapp", "").strip()
-    categoria = request.form.get("categoria", "Ali-Bobó").strip()
+    nwa         = request.form.get("nome_whatsapp", "").strip()
+    categoria   = request.form.get("categoria", "Ali-Bobó").strip()
+    instrumento = request.form.get("instrumento", "").strip()
     try:
         ordem = int(request.form.get("ordem", 0))
     except ValueError:
         ordem = 0
     with get_db() as con:
         con.execute(
-            "UPDATE elementos SET nome_whatsapp=?, categoria=?, ordem=? WHERE id=?",
-            (nwa, categoria, ordem, eid)
+            "UPDATE elementos SET nome_whatsapp=?, categoria=?, ordem=?, instrumento=? WHERE id=?",
+            (nwa, categoria, ordem, instrumento, eid)
         )
     return redirect(url_for("elementos"))
 
@@ -531,6 +536,48 @@ def tabela(eid):
                            totais=totais, sem_resp=sem_resp,
                            xeques=xeques, membros=membros,
                            hierarquia=HIERARQUIA)
+
+
+@app.route("/eventos/<int:eid>/instrumentos")
+@login_required
+def evento_instrumentos(eid):
+    with get_db() as con:
+        ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
+        elems = con.execute("SELECT * FROM elementos ORDER BY categoria, ordem, nome").fetchall()
+        resps = con.execute(
+            "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
+        ).fetchall()
+    if not ev:
+        return redirect(url_for("index"))
+
+    opcoes = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
+    resp_map = {}
+    for r in resps:
+        if r["opcao"] not in resp_map.setdefault(r["elemento_id"], []):
+            resp_map[r["elemento_id"]].append(r["opcao"])
+
+    # opções que significam "vai" — sim, yes, vou, levo, ou fallback para todas
+    opcoes_sim = [o for o in opcoes if any(s in o.lower() for s in ["sim","yes","vou","levo"])]
+    if not opcoes_sim:
+        opcoes_sim = opcoes
+
+    # separar quem vai, quem não vai, quem não respondeu
+    vai   = [e for e in elems if any(op in resp_map.get(e["id"],[]) for op in opcoes_sim)]
+    nao   = [e for e in elems if e["id"] in resp_map and not any(op in resp_map.get(e["id"],[]) for op in opcoes_sim)]
+    s_resp = [e for e in elems if e["id"] not in resp_map]
+
+    # contagem de instrumentos de quem vai
+    instr_count = {}
+    for e in vai:
+        instr = (e["instrumento"] or "").strip()
+        if instr:
+            instr_count[instr] = instr_count.get(instr, 0) + 1
+
+    return render_template("evento_instrumentos.html",
+                           ev=ev, opcoes=opcoes,
+                           vai=vai, nao=nao, sem_resp=s_resp,
+                           instr_count=instr_count,
+                           resp_map=resp_map, opcoes_sim=opcoes_sim)
 
 # ── Ensaios ───────────────────────────────────────────────────────────────────
 

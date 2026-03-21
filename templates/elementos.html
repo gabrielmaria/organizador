@@ -17,7 +17,7 @@
         <input type="text" name="nome_whatsapp" placeholder="Ex: Joãozinho">
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 80px;gap:.75rem;margin-bottom:.75rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:.75rem;margin-bottom:.75rem">
       <div>
         <label>Categoria</label>
         <select name="categoria">
@@ -25,6 +25,10 @@
           <option value="{{ cat }}">{{ cat }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div>
+        <label>Instrumento</label>
+        <input type="text" name="instrumento" placeholder="Ex: Guitarra">
       </div>
       <div>
         <label>Ordem</label>
@@ -35,7 +39,6 @@
   </form>
 </div>
 
-<!-- Membros ativos -->
 {% for cat in hierarquia %}
 {% set membros_cat = elementos | selectattr('categoria', 'equalto', cat) | list %}
 {% if membros_cat %}
@@ -48,6 +51,9 @@
     <div class="row" style="margin-bottom:.4rem">
       <span style="font-size:12px;font-weight:700;color:var(--text3);min-width:24px">{{ e.ordem }}</span>
       <span style="font-weight:600;flex:1">{{ e.nome }}</span>
+      {% if e.instrumento %}
+      <span style="font-size:12px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px">{{ e.instrumento }}</span>
+      {% endif %}
       <form method="post" action="{{ url_for('del_elemento', eid=e.id) }}"
             onsubmit="return confirm('Marcar {{ e.nome }} como ex-membro? Os registos históricos são preservados.')">
         <button class="btn btn-sm btn-danger">Saiu da tuna</button>
@@ -57,15 +63,17 @@
           class="row" style="gap:.5rem">
       <input type="text" name="nome_whatsapp" value="{{ e.nome_whatsapp or '' }}"
              placeholder="Nome no WhatsApp..."
-             style="flex:1;font-size:13px;padding:6px 10px">
+             style="flex:1;min-width:80px;font-size:13px;padding:6px 10px">
+      <input type="text" name="instrumento" value="{{ e.instrumento or '' }}"
+             placeholder="Instrumento..."
+             style="width:120px;font-size:13px;padding:6px 10px">
       <select name="categoria" style="font-size:13px;padding:6px 8px;width:auto">
         {% for cat2 in hierarquia %}
         <option value="{{ cat2 }}" {% if e.categoria == cat2 %}selected{% endif %}>{{ cat2 }}</option>
         {% endfor %}
       </select>
       <input type="text" name="ordem" value="{{ e.ordem }}" inputmode="numeric"
-             style="width:52px;font-size:13px;padding:6px 8px;text-align:center"
-             placeholder="#" title="Ordem">
+             style="width:48px;font-size:13px;padding:6px 8px;text-align:center" placeholder="#">
       <button class="btn btn-sm">Guardar</button>
     </form>
   </div>
@@ -78,7 +86,6 @@
 <div class="card" style="text-align:center;padding:2rem;color:var(--text3)">Nenhum membro ativo ainda.</div>
 {% endif %}
 
-<!-- Ex-membros -->
 {% if ex_membros %}
 <div style="margin-top:1.5rem">
   <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
@@ -89,20 +96,18 @@
     <div style="border-top:{% if not loop.first %}1px solid var(--border){% else %}none{% endif %};padding:.65rem .75rem;display:flex;align-items:center;gap:.75rem">
       <span style="flex:1;color:var(--text2)">{{ e.nome }}</span>
       <span class="muted" style="font-size:12px">{{ e.categoria }}</span>
+      {% if e.instrumento %}<span style="font-size:12px;color:var(--text3)">{{ e.instrumento }}</span>{% endif %}
       <form method="post" action="{{ url_for('reativar_elemento', eid=e.id) }}">
         <button class="btn btn-sm">↩ Reativar</button>
       </form>
       <form method="post" action="{{ url_for('apagar_elemento', eid=e.id) }}"
-            onsubmit="return confirm('Apagar {{ e.nome }} permanentemente? Isto remove todos os registos históricos.')">
+            onsubmit="return confirm('Apagar {{ e.nome }} permanentemente?')">
         <button class="btn btn-sm btn-danger">Apagar</button>
       </form>
     </div>
     {% endfor %}
   </div>
-  <p class="muted" style="font-size:12px;padding:0 .25rem;margin-top:.4rem">
-    Os registos históricos de ex-membros são preservados nas tabelas e estatísticas.
-    "Apagar" remove tudo permanentemente.
-  </p>
+  <p class="muted" style="font-size:12px;padding:0 .25rem;margin-top:.4rem">Os registos históricos de ex-membros são preservados.</p>
 </div>
 {% endif %}
 

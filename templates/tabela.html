@@ -20,6 +20,7 @@
     <h1 style="font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.nome }}</h1>
     <span class="muted">{{ ev.criado }}</span>
   </div>
+  <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm">🎸 Instrumentos</a>
   <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">✏️ Editar</a>
 </div>
 
@@ -47,7 +48,7 @@
   <button class="filter-btn" data-filtro="__sem_resposta__" onclick="filtrar(this)">Sem resposta</button>
 </div>
 
-<!-- Tabela Xeques -->
+<!-- Xeques -->
 {% if xeques %}
 <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Xeques</div>
 <div class="card" style="padding:.5rem;margin-bottom:1rem">
@@ -58,7 +59,7 @@
        data-sem="{{ 'true' if not resps else 'false' }}"
        style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
     <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">
+    <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:flex-end">
       {% if resps %}
         {% for op in opcoes %}
           {% if op in resps %}
@@ -75,7 +76,7 @@
 </div>
 {% endif %}
 
-<!-- Tabela Camelos + Ali-Bobós -->
+<!-- Camelos + Ali-Bobós -->
 {% if membros %}
 <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Camelos &amp; Ali-Bobós</div>
 <div class="card" style="padding:.5rem">
@@ -92,7 +93,7 @@
        data-sem="{{ 'true' if not resps else 'false' }}"
        style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:1px solid var(--border)">
     <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">
+    <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:flex-end">
       {% if resps %}
         {% for op in opcoes %}
           {% if op in resps %}
@@ -113,12 +114,9 @@
 
 <script>
 function filtrar(btn) {
-  const opcao = btn.dataset.filtro;
-  document.querySelectorAll('.filter-btn').forEach(function(b) {
-    b.classList.remove('active');
-  });
+  var opcao = btn.dataset.filtro;
+  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-
   document.querySelectorAll('.membro-row').forEach(function(row) {
     if (opcao === '__todos__') {
       row.classList.remove('hidden');
@@ -129,15 +127,11 @@ function filtrar(btn) {
       row.classList.toggle('hidden', opcoes.indexOf(opcao) === -1);
     }
   });
-
   document.querySelectorAll('.cat-header').forEach(function(header) {
     var next = header.nextElementSibling;
     var temVisiveis = false;
     while (next && !next.classList.contains('cat-header')) {
-      if (next.classList.contains('membro-row') && !next.classList.contains('hidden')) {
-        temVisiveis = true;
-        break;
-      }
+      if (next.classList.contains('membro-row') && !next.classList.contains('hidden')) { temVisiveis = true; break; }
       next = next.nextElementSibling;
     }
     header.style.display = temVisiveis ? '' : 'none';
