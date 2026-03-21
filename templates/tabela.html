@@ -55,7 +55,7 @@
   {% for elem in xeques %}
   {% set resps = resp_map.get(elem.id, []) %}
   <div class="membro-row"
-       data-opcoes="{{ resps | join(',') }}"
+       data-opcoes="{{ resps | join('|||') }}"
        data-sem="{{ 'true' if not resps else 'false' }}"
        style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
     <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
@@ -89,7 +89,7 @@
   {% for elem in membros_cat %}
   {% set resps = resp_map.get(elem.id, []) %}
   <div class="membro-row"
-       data-opcoes="{{ resps | join(',') }}"
+       data-opcoes="{{ resps | join('|||') }}"
        data-sem="{{ 'true' if not resps else 'false' }}"
        style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:1px solid var(--border)">
     <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
@@ -123,8 +123,8 @@ function filtrar(btn) {
     } else if (opcao === '__sem_resposta__') {
       row.classList.toggle('hidden', row.dataset.sem !== 'true');
     } else {
-      var opcoes = row.dataset.opcoes.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
-      row.classList.toggle('hidden', opcoes.indexOf(opcao) === -1);
+      var opcoes = row.dataset.opcoes.split('|||').map(function(s) { return s.trim(); }).filter(Boolean);
+      row.classList.toggle('hidden', opcoes.indexOf(opcao.trim()) === -1);
     }
   });
   document.querySelectorAll('.cat-header').forEach(function(header) {

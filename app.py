@@ -526,7 +526,8 @@ def tabela(eid):
     opcoes   = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
     resp_map = {}
     for r in resps:
-        if r["opcao"] not in resp_map.setdefault(r["elemento_id"], []): resp_map[r["elemento_id"]].append(r["opcao"])
+        op = r["opcao"].strip()
+        if op not in resp_map.setdefault(r["elemento_id"], []): resp_map[r["elemento_id"]].append(op)
     totais   = {op: sum(1 for v in resp_map.values() if op in v) for op in opcoes}
     sem_resp = sum(1 for e in elems if e["id"] not in resp_map)
     xeques   = [e for e in elems if e["categoria"] == "Xeque"]
