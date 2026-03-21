@@ -118,20 +118,22 @@ function filtrar(btn) {
   document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   document.querySelectorAll('.membro-row').forEach(function(row) {
+    var mostrar;
     if (opcao === '__todos__') {
-      row.classList.remove('hidden');
+      mostrar = true;
     } else if (opcao === '__sem_resposta__') {
-      row.classList.toggle('hidden', row.dataset.sem !== 'true');
+      mostrar = row.dataset.sem === 'true';
     } else {
       var opcoes = row.dataset.opcoes.split('|||').map(function(s) { return s.trim(); }).filter(Boolean);
-      row.classList.toggle('hidden', opcoes.indexOf(opcao.trim()) === -1);
+      mostrar = opcoes.indexOf(opcao.trim()) !== -1;
     }
+    row.style.display = mostrar ? 'flex' : 'none';
   });
   document.querySelectorAll('.cat-header').forEach(function(header) {
     var next = header.nextElementSibling;
     var temVisiveis = false;
     while (next && !next.classList.contains('cat-header')) {
-      if (next.classList.contains('membro-row') && !next.classList.contains('hidden')) { temVisiveis = true; break; }
+      if (next.classList.contains('membro-row') && next.style.display !== 'none') { temVisiveis = true; break; }
       next = next.nextElementSibling;
     }
     header.style.display = temVisiveis ? '' : 'none';
