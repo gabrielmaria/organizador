@@ -1,9 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Membros — Tuna{% endblock %}
+{% block head %}
+<style>
+.membro-row {
+  border-top:1px solid var(--border);padding:.75rem;
+  transition:background .15s;
+}
+.membro-row.drag-over {
+  border-top:2px solid var(--blue);
+}
+.membro-row.dragging {
+  opacity:.35;
+}
+.drag-handle {
+  color:var(--text3);font-size:18px;cursor:grab;
+  padding:0 8px 0 0;user-select:none;flex-shrink:0;line-height:1;
+}
+.drag-handle:active { cursor:grabbing }
+.saved-toast {
+  position:fixed;top:62px;right:1rem;
+  background:#1a1a18;color:#fff;
+  padding:6px 14px;border-radius:20px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:opacity .3s;
+  z-index:200;pointer-events:none;
+}
+.saved-toast.show { opacity:1 }
+</style>
+{% endblock %}
 {% block content %}
+
+<div class="saved-toast" id="saved-toast">✓ Ordem guardada</div>
 
 <h1 style="font-size:20px;font-weight:700;margin-bottom:1rem">Membros da tuna</h1>
 
+<!-- Adicionar membro -->
 <div class="card">
   <div class="card-title">Adicionar membro</div>
   <form method="post" action="{{ url_for('add_elemento') }}">
@@ -17,7 +48,7 @@
         <input type="text" name="nome_whatsapp" placeholder="Ex: Joãozinho">
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:.75rem;margin-bottom:.75rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
       <div>
         <label>Categoria</label>
         <select name="categoria">
@@ -30,54 +61,54 @@
         <label>Instrumento</label>
         <input type="text" name="instrumento" placeholder="Ex: Guitarra">
       </div>
-      <div>
-        <label>Ordem</label>
-        <input type="text" name="ordem" placeholder="Ex: 3" inputmode="numeric">
-      </div>
     </div>
     <button class="btn btn-primary btn-sm">Adicionar</button>
   </form>
 </div>
 
+<!-- Membros ativos por categoria -->
 {% for cat in hierarquia %}
 {% set membros_cat = elementos | selectattr('categoria', 'equalto', cat) | list %}
 {% if membros_cat %}
 <div class="card" style="padding:.5rem">
   <div style="padding:.5rem .75rem .25rem;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">
     {{ cat }}s ({{ membros_cat | length }})
+    <span style="font-weight:400;color:var(--text3)"> — arrasta para reordenar</span>
   </div>
-  {% for e in membros_cat %}
-  <div style="border-top:1px solid var(--border);padding:.75rem">
-    <div class="row" style="margin-bottom:.4rem">
-      <span style="font-size:12px;font-weight:700;color:var(--text3);min-width:24px">{{ e.ordem }}</span>
-      <span style="font-weight:600;flex:1">{{ e.nome }}</span>
-      {% if e.instrumento %}
-      <span style="font-size:12px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px">{{ e.instrumento }}</span>
-      {% endif %}
-      <form method="post" action="{{ url_for('del_elemento', eid=e.id) }}"
-            onsubmit="return confirm('Marcar {{ e.nome }} como ex-membro? Os registos históricos são preservados.')">
-        <button class="btn btn-sm btn-danger">Saiu da tuna</button>
+  <div class="sortable" data-cat="{{ cat }}">
+    {% for e in membros_cat %}
+    <div class="membro-row" draggable="true" data-id="{{ e.id }}">
+      <div class="row" style="margin-bottom:.4rem;flex-wrap:nowrap">
+        <span class="drag-handle">⠿</span>
+        <span style="font-weight:600;flex:1">{{ e.nome }}</span>
+        {% if e.instrumento %}
+        <span style="font-size:12px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px;white-space:nowrap">{{ e.instrumento }}</span>
+        {% endif %}
+        <form method="post" action="{{ url_for('del_elemento', eid=e.id) }}"
+              onsubmit="return confirm('Marcar {{ e.nome }} como ex-membro?')">
+          <button class="btn btn-sm btn-danger" style="margin-left:.25rem">Saiu</button>
+        </form>
+      </div>
+      <form method="post" action="{{ url_for('edit_elemento', eid=e.id) }}"
+            class="row" style="gap:.5rem;padding-left:26px">
+        <input type="text" name="nome_whatsapp" value="{{ e.nome_whatsapp or '' }}"
+               placeholder="Nome no WhatsApp..."
+               style="flex:1;min-width:80px;font-size:13px;padding:6px 10px">
+        <input type="text" name="instrumento" value="{{ e.instrumento or '' }}"
+               placeholder="Instrumento..."
+               style="width:110px;font-size:13px;padding:6px 10px">
+        <select name="categoria" style="font-size:13px;padding:6px 8px;width:auto">
+          {% for cat2 in hierarquia %}
+          <option value="{{ cat2 }}" {% if e.categoria == cat2 %}selected{% endif %}>{{ cat2 }}</option>
+          {% endfor %}
+        </select>
+        <!-- manter ordem atual ao guardar -->
+        <input type="hidden" name="ordem" value="{{ e.ordem }}">
+        <button class="btn btn-sm">Guardar</button>
       </form>
     </div>
-    <form method="post" action="{{ url_for('edit_elemento', eid=e.id) }}"
-          class="row" style="gap:.5rem">
-      <input type="text" name="nome_whatsapp" value="{{ e.nome_whatsapp or '' }}"
-             placeholder="Nome no WhatsApp..."
-             style="flex:1;min-width:80px;font-size:13px;padding:6px 10px">
-      <input type="text" name="instrumento" value="{{ e.instrumento or '' }}"
-             placeholder="Instrumento..."
-             style="width:120px;font-size:13px;padding:6px 10px">
-      <select name="categoria" style="font-size:13px;padding:6px 8px;width:auto">
-        {% for cat2 in hierarquia %}
-        <option value="{{ cat2 }}" {% if e.categoria == cat2 %}selected{% endif %}>{{ cat2 }}</option>
-        {% endfor %}
-      </select>
-      <input type="text" name="ordem" value="{{ e.ordem }}" inputmode="numeric"
-             style="width:48px;font-size:13px;padding:6px 8px;text-align:center" placeholder="#">
-      <button class="btn btn-sm">Guardar</button>
-    </form>
+    {% endfor %}
   </div>
-  {% endfor %}
 </div>
 {% endif %}
 {% endfor %}
@@ -86,6 +117,7 @@
 <div class="card" style="text-align:center;padding:2rem;color:var(--text3)">Nenhum membro ativo ainda.</div>
 {% endif %}
 
+<!-- Ex-membros -->
 {% if ex_membros %}
 <div style="margin-top:1.5rem">
   <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
@@ -111,4 +143,51 @@
 </div>
 {% endif %}
 
+<script>
+document.querySelectorAll('.sortable').forEach(function(list) {
+  var dragged = null;
+
+  list.addEventListener('dragstart', function(e) {
+    dragged = e.target.closest('.membro-row');
+    if (!dragged) return;
+    setTimeout(function() { dragged.classList.add('dragging'); }, 0);
+  });
+
+  list.addEventListener('dragend', function() {
+    if (dragged) dragged.classList.remove('dragging');
+    list.querySelectorAll('.membro-row').forEach(function(r) { r.classList.remove('drag-over'); });
+    guardarOrdem(list);
+  });
+
+  list.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    var over = e.target.closest('.membro-row');
+    if (!over || over === dragged) return;
+    list.querySelectorAll('.membro-row').forEach(function(r) { r.classList.remove('drag-over'); });
+    var rect = over.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) {
+      list.insertBefore(dragged, over);
+    } else {
+      list.insertBefore(dragged, over.nextSibling);
+    }
+    over.classList.add('drag-over');
+  });
+});
+
+function guardarOrdem(list) {
+  var ids = Array.from(list.querySelectorAll('.membro-row')).map(function(r) { return parseInt(r.dataset.id); });
+  fetch('/elementos/reordenar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: ids })
+  }).then(function() { mostrarToast(); });
+}
+
+function mostrarToast() {
+  var el = document.getElementById('saved-toast');
+  el.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(function() { el.classList.remove('show'); }, 1600);
+}
+</script>
 {% endblock %}
