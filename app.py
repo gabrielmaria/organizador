@@ -83,7 +83,8 @@ def init_db():
             nome        TEXT NOT NULL,
             opcoes      TEXT NOT NULL,
             criado      TEXT NOT NULL,
-            data_evento TEXT DEFAULT ''
+            data_evento TEXT DEFAULT '',
+            estado      TEXT DEFAULT 'por-validar'
         );
         CREATE TABLE IF NOT EXISTS respostas (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,6 +130,13 @@ def init_db():
     try:
         with get_db() as con:
             con.execute("ALTER TABLE eventos ADD COLUMN data_evento TEXT DEFAULT ''")
+    except Exception:
+        pass
+
+    # migração: adicionar estado à tabela eventos
+    try:
+        with get_db() as con:
+            con.execute("ALTER TABLE eventos ADD COLUMN estado TEXT DEFAULT 'por-validar'")
     except Exception:
         pass
 
@@ -359,6 +367,15 @@ def novo_evento():
             return redirect(url_for("index"))
         flash("Preenche o nome e as opcoes.")
     return render_template("novo_evento.html")
+
+
+@app.route("/eventos/<int:eid>/estado", methods=["POST"])
+@login_required
+def set_estado_evento(eid):
+    estado = request.form.get("estado", "por-validar")
+    with get_db() as con:
+        con.execute("UPDATE eventos SET estado=? WHERE id=?", (estado, eid))
+    return redirect(url_for("index"))
 
 @app.route("/eventos/<int:eid>/del", methods=["POST"])
 @login_required
