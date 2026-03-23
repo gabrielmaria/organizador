@@ -442,20 +442,20 @@ def aplicar_votos(evento_id, votos):
         elems = con.execute("SELECT id, nome, nome_whatsapp FROM elementos").fetchall()
     elem_index = {e["nome"].lower().strip(): e["id"] for e in elems}
     elem_wa    = {e["nome_whatsapp"].lower().strip(): e["id"] for e in elems if e["nome_whatsapp"]}
-    elem_first = {}
-    for e in elems:
-        p = e["nome"].lower().split()[0]
-        if p not in elem_first: elem_first[p] = e["id"]
-
     def encontrar(n):
         n = n.lower().strip()
-        if n in elem_wa:    return elem_wa[n]
+        # 1. correspondência exata com nome WhatsApp
+        if n in elem_wa: return elem_wa[n]
+        # 2. correspondência exata com nome na app
         if n in elem_index: return elem_index[n]
+        # 3. nome WhatsApp contido no nome CSV (ex: "Bolhas" bate "Rafael Bolhas")
         for k, v in elem_wa.items():
-            if n in k or k in n: return v
+            if k and k in n: return v
+        # 4. nome na app contido no nome CSV (ex: "Renato Morais" bate "Renato Morais")
         for k, v in elem_index.items():
-            if n in k or k in n: return v
-        return elem_first.get(n.split()[0])
+            if k and k in n: return v
+        # NÃO fazer match por primeiro nome apenas — demasiado ambíguo
+        return None
 
     registados, nao_encontrados = 0, []
     for voto in votos:
