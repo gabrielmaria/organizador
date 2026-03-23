@@ -57,11 +57,12 @@ textarea{min-height:100px;resize:vertical}
 <body>
 {% if session.auth %}
 <nav>
-  <span class="brand">🦊 Desertuna</span>
+  <span class="brand">🎵 Tuna</span>
   <a href="{{ url_for('index') }}" class="nav-link">Eventos</a>
   <a href="{{ url_for('ensaios') }}" class="nav-link">Ensaios</a>
   <a href="{{ url_for('elementos') }}" class="nav-link">Membros</a>
   <a href="{{ url_for('estatisticas') }}" class="nav-link">Stats</a>
+  <a href="{{ url_for('backup_pagina') }}" class="nav-link">Backup</a>
   <a href="{{ url_for('logout') }}" class="nav-link">Sair</a>
 </nav>
 {% endif %}

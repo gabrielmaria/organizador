@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Backup — Tuna{% endblock %}
+{% block content %}
+
+<h1 style="font-size:20px;font-weight:700;margin-bottom:1rem">Backup & Exportação</h1>
+
+<!-- Backup JSON -->
+<div class="card">
+  <div class="card-title">📦 Backup completo (JSON)</div>
+  <p class="muted" style="margin-bottom:1rem">
+    Exporta todos os dados num ficheiro JSON. Usa este ficheiro para restaurar a aplicação caso o servidor se perca.
+  </p>
+  <a href="{{ url_for('backup') }}" class="btn btn-primary">⬇ Descarregar backup JSON</a>
+</div>
+
+<!-- Excel -->
+<div class="card">
+  <div class="card-title">📊 Exportar para Excel</div>
+  <p class="muted" style="margin-bottom:1rem">
+    Exporta todos os dados para um ficheiro Excel (.xlsx) com várias folhas — Membros, Eventos, Respostas, Ensaios, Presenças e Resumo.
+  </p>
+  <a href="{{ url_for('export_excel') }}" class="btn" style="background:var(--green-bg);color:var(--green);border-color:var(--green-border)">📊 Descarregar Excel</a>
+</div>
+
+<!-- Restaurar JSON -->
+<div class="card">
+  <div class="card-title">📥 Restaurar backup</div>
+  <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;font-size:13px;color:var(--red)">
+    ⚠️ <strong>Atenção:</strong> restaurar um backup apaga <strong>todos os dados atuais</strong> e substitui pelos do ficheiro.
+    Esta ação não pode ser desfeita.
+  </div>
+  <form method="post" action="{{ url_for('restore') }}" enctype="multipart/form-data"
+        onsubmit="return confirm('Tens a certeza? Todos os dados atuais serão apagados e substituídos pelo backup.')">
+    <label>Ficheiro de backup (.json)</label>
+    <div class="row" style="margin-top:.5rem">
+      <input type="file" name="backup_file" accept=".json"
+             style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px;background:var(--card);color:var(--text)">
+      <button class="btn btn-danger" type="submit">Restaurar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Info -->
+<div class="card" style="background:var(--bg);border-color:var(--border)">
+  <div style="font-size:13px;color:var(--text2);line-height:1.8">
+    <strong>O que é guardado:</strong><br>
+    ✓ Membros (nome, WhatsApp, categoria, instrumento)<br>
+    ✓ Eventos (nome, opções, data, estado de validação)<br>
+    ✓ Respostas às sondagens<br>
+    ✓ Ensaios e presenças<br>
+    <br>
+    <strong>Nota:</strong> o ficheiro Excel é só para consulta — para restaurar usa sempre o JSON.
+  </div>
+</div>
+
+{% endblock %}

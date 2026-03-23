@@ -774,6 +774,245 @@ def estatisticas_membro(elem_id):
                            pct_atraso=pct_atraso,
                            pct_falta=pct_falta)
 
+
+# ── Backup / Restore ──────────────────────────────────────────────────────────
+
+@app.route("/backup/pagina")
+@login_required
+def backup_pagina():
+    return render_template("backup.html")
+
+@app.route("/backup")
+@login_required
+def backup():
+    from flask import Response
+    import json
+    with get_db() as con:
+        elementos  = con.execute("SELECT * FROM elementos").fetchall()
+        eventos    = con.execute("SELECT * FROM eventos").fetchall()
+        respostas  = con.execute("SELECT * FROM respostas").fetchall()
+        ensaios    = con.execute("SELECT * FROM ensaios").fetchall()
+        presencas  = con.execute("SELECT * FROM presencas").fetchall()
+
+    data = {
+        "versao": 1,
+        "exportado": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "elementos": [dict(e) for e in elementos],
+        "eventos":   [dict(e) for e in eventos],
+        "respostas": [dict(r) for r in respostas],
+        "ensaios":   [dict(e) for e in ensaios],
+        "presencas": [dict(p) for p in presencas],
+    }
+    nome = "tuna_backup_" + datetime.now().strftime("%Y%m%d_%H%M") + ".json"
+    return Response(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": f"attachment; filename={nome}"}
+    )
+
+@app.route("/restore", methods=["POST"])
+@login_required
+def restore():
+    import json
+    file = request.files.get("backup_file")
+    if not file:
+        flash("Nenhum ficheiro enviado.")
+        return redirect(url_for("index"))
+    try:
+        data = json.loads(file.read().decode("utf-8"))
+    except Exception:
+        flash("Ficheiro inválido — não é um JSON válido.")
+        return redirect(url_for("index"))
+
+    if data.get("versao") != 1:
+        flash("Versão de backup não suportada.")
+        return redirect(url_for("index"))
+
+    try:
+        with get_db() as con:
+            # limpar tudo
+            con.executescript("""
+                DELETE FROM presencas;
+                DELETE FROM respostas;
+                DELETE FROM ensaios;
+                DELETE FROM eventos;
+                DELETE FROM elementos;
+            """)
+
+        # repor elementos
+        for e in data.get("elementos", []):
+            with get_db() as con:
+                con.execute("""
+                    INSERT OR IGNORE INTO elementos
+                        (id, nome, nome_whatsapp, categoria, ordem, ativo, instrumento)
+                    VALUES (?,?,?,?,?,?,?)
+                """, (e.get("id"), e.get("nome"), e.get("nome_whatsapp",""),
+                      e.get("categoria","Ali-Bobó"), e.get("ordem",0),
+                      e.get("ativo",1), e.get("instrumento","")))
+
+        # repor eventos
+        for e in data.get("eventos", []):
+            with get_db() as con:
+                con.execute("""
+                    INSERT OR IGNORE INTO eventos
+                        (id, nome, opcoes, criado, data_evento, estado)
+                    VALUES (?,?,?,?,?,?)
+                """, (e.get("id"), e.get("nome"), e.get("opcoes"),
+                      e.get("criado",""), e.get("data_evento",""),
+                      e.get("estado","por-validar")))
+
+        # repor respostas
+        for r in data.get("respostas", []):
+            with get_db() as con:
+                con.execute("""
+                    INSERT OR IGNORE INTO respostas
+                        (id, evento_id, elemento_id, opcao)
+                    VALUES (?,?,?,?)
+                """, (r.get("id"), r.get("evento_id"),
+                      r.get("elemento_id"), r.get("opcao")))
+
+        # repor ensaios
+        for e in data.get("ensaios", []):
+            with get_db() as con:
+                con.execute("""
+                    INSERT OR IGNORE INTO ensaios (id, data, criado)
+                    VALUES (?,?,?)
+                """, (e.get("id"), e.get("data"), e.get("criado","")))
+
+        # repor presenças
+        for p in data.get("presencas", []):
+            with get_db() as con:
+                con.execute("""
+                    INSERT OR IGNORE INTO presencas
+                        (id, ensaio_id, elemento_id, estado, hora, nota)
+                    VALUES (?,?,?,?,?,?)
+                """, (p.get("id"), p.get("ensaio_id"), p.get("elemento_id"),
+                      p.get("estado","sem-registo"), p.get("hora",""), p.get("nota","")))
+
+        total = (len(data.get("elementos",[])) + len(data.get("eventos",[])) +
+                 len(data.get("respostas",[])) + len(data.get("ensaios",[])) +
+                 len(data.get("presencas",[])))
+        flash(f"Backup restaurado com sucesso — {total} registos repostos.")
+    except Exception as ex:
+        flash(f"Erro ao restaurar: {ex}")
+
+    return redirect(url_for("index"))
+
+
+@app.route("/export/excel")
+@login_required
+def export_excel():
+    import io
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from flask import Response
+
+    with get_db() as con:
+        elementos = con.execute("SELECT * FROM elementos ORDER BY categoria, ordem, nome").fetchall()
+        eventos   = con.execute("SELECT * FROM eventos ORDER BY id DESC").fetchall()
+        respostas = con.execute("SELECT * FROM respostas").fetchall()
+        ensaios   = con.execute("SELECT * FROM ensaios ORDER BY data DESC").fetchall()
+        presencas = con.execute("SELECT * FROM presencas").fetchall()
+
+    wb = openpyxl.Workbook()
+
+    header_font  = Font(bold=True, color="FFFFFF")
+    header_fill  = PatternFill("solid", fgColor="185fa5")
+    center       = Alignment(horizontal="center")
+
+    def make_sheet(wb, title, headers, rows, first=False):
+        ws = wb.active if first else wb.create_sheet(title)
+        ws.title = title
+        ws.append(headers)
+        for cell in ws[1]:
+            cell.font      = header_font
+            cell.fill      = header_fill
+            cell.alignment = center
+        for row in rows:
+            ws.append(row)
+        # auto width
+        for col in ws.columns:
+            max_len = max((len(str(c.value or "")) for c in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 50)
+        return ws
+
+    # ── Sheet 1: Membros ──────────────────────────────────────────────────────
+    make_sheet(wb, "Membros",
+        ["ID", "Nome", "Nome WhatsApp", "Categoria", "Instrumento", "Ativo"],
+        [(e["id"], e["nome"], e["nome_whatsapp"] or "",
+          e["categoria"], e["instrumento"] or "",
+          "Sim" if e["ativo"] else "Não") for e in elementos],
+        first=True
+    )
+
+    # ── Sheet 2: Eventos ─────────────────────────────────────────────────────
+    make_sheet(wb, "Eventos",
+        ["ID", "Nome", "Criado", "Estado", "Opções"],
+        [(e["id"], e["nome"], e["criado"],
+          e["estado"] or "por-validar",
+          e["opcoes"].replace("\n", " | ")) for e in eventos]
+    )
+
+    # ── Sheet 3: Respostas ────────────────────────────────────────────────────
+    # enriquecer com nomes
+    elem_map  = {e["id"]: e["nome"] for e in elementos}
+    event_map = {e["id"]: e["nome"] for e in eventos}
+    make_sheet(wb, "Respostas",
+        ["Evento", "Membro", "Opção"],
+        [(event_map.get(r["evento_id"], r["evento_id"]),
+          elem_map.get(r["elemento_id"], r["elemento_id"]),
+          r["opcao"]) for r in respostas]
+    )
+
+    # ── Sheet 4: Ensaios ──────────────────────────────────────────────────────
+    make_sheet(wb, "Ensaios",
+        ["ID", "Data", "Criado"],
+        [(e["id"], e["data"], e["criado"]) for e in ensaios]
+    )
+
+    # ── Sheet 5: Presenças ────────────────────────────────────────────────────
+    ensaio_map = {e["id"]: e["data"] for e in ensaios}
+    make_sheet(wb, "Presenças",
+        ["Ensaio", "Membro", "Estado"],
+        [(ensaio_map.get(p["ensaio_id"], p["ensaio_id"]),
+          elem_map.get(p["elemento_id"], p["elemento_id"]),
+          p["estado"]) for p in presencas]
+    )
+
+    # ── Sheet 6: Resumo por evento ────────────────────────────────────────────
+    ws_res = wb.create_sheet("Resumo Eventos")
+    ws_res.title = "Resumo Eventos"
+    ws_res.append(["Evento", "Estado", "Opção", "Total"])
+    for cell in ws_res[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+
+    resp_por_evento = {}
+    for r in respostas:
+        key = (r["evento_id"], r["opcao"])
+        resp_por_evento[key] = resp_por_evento.get(key, 0) + 1
+
+    for ev in eventos:
+        opcoes_ev = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
+        for op in opcoes_ev:
+            total = resp_por_evento.get((ev["id"], op), 0)
+            ws_res.append([ev["nome"], ev["estado"] or "por-validar", op, total])
+
+    for col in ws_res.columns:
+        max_len = max((len(str(c.value or "")) for c in col), default=10)
+        ws_res.column_dimensions[col[0].column_letter].width = min(max_len + 4, 60)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    nome = "tuna_export_" + datetime.now().strftime("%Y%m%d_%H%M") + ".xlsx"
+    return Response(
+        buf.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={nome}"}
+    )
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)
