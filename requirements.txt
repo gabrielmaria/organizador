@@ -3,3 +3,5 @@ pillow>=10.0
 pytesseract>=0.3.10
 gunicorn>=21.0
 libsql-experimental
+openpyxl
+openpyxl
