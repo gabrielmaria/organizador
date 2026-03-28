@@ -34,8 +34,7 @@
 
 <h1 style="font-size:20px;font-weight:700;margin-bottom:1rem">Membros da tuna</h1>
 
-<!-- Adicionar membro - ADMIN ONLY -->
-{% if current_role == 'admin' %}
+<!-- Adicionar membro -->
 <div class="card">
   <div class="card-title">Adicionar membro</div>
   <form method="post" action="{{ url_for('add_elemento') }}">
@@ -66,7 +65,6 @@
     <button class="btn btn-primary btn-sm">Adicionar</button>
   </form>
 </div>
-{% endif %}
 
 <!-- Membros ativos por categoria -->
 {% for cat in hierarquia %}
@@ -79,21 +77,18 @@
   </div>
   <div class="sortable" data-cat="{{ cat }}">
     {% for e in membros_cat %}
-    <div class="membro-row" draggable="{% if current_role == 'admin' %}true{% else %}false{% endif %}" data-id="{{ e.id }}">
+    <div class="membro-row" draggable="true" data-id="{{ e.id }}">
       <div class="row" style="margin-bottom:.4rem;flex-wrap:nowrap">
         <span class="drag-handle">⠿</span>
         <span style="font-weight:600;flex:1">{{ e.nome }}</span>
         {% if e.instrumento %}
         <span style="font-size:12px;background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px;white-space:nowrap">{{ e.instrumento }}</span>
         {% endif %}
-        {% if current_role == 'admin' %}
         <form method="post" action="{{ url_for('del_elemento', eid=e.id) }}"
               onsubmit="return confirm('Marcar {{ e.nome }} como ex-membro?')">
           <button class="btn btn-sm btn-danger" style="margin-left:.25rem">Saiu</button>
         </form>
-        {% endif %}
       </div>
-      {% if current_role == 'admin' %}
       <form method="post" action="{{ url_for('edit_elemento', eid=e.id) }}"
             class="row" style="gap:.5rem;padding-left:26px">
         <input type="text" name="nome_whatsapp" value="{{ e.nome_whatsapp or '' }}"
@@ -111,12 +106,6 @@
         <input type="hidden" name="ordem" value="{{ e.ordem }}">
         <button class="btn btn-sm">Guardar</button>
       </form>
-      {% else %}
-      <div class="row" style="padding-left:26px;color:var(--text2);font-size:13px">
-        {% if e.nome_whatsapp %}<span>WhatsApp: {{ e.nome_whatsapp }}</span>{% endif %}
-        {% if e.instrumento %}<span>{{ e.instrumento }}</span>{% endif %}
-      </div>
-      {% endif %}
     </div>
     {% endfor %}
   </div>
@@ -128,8 +117,8 @@
 <div class="card" style="text-align:center;padding:2rem;color:var(--text3)">Nenhum membro ativo ainda.</div>
 {% endif %}
 
-<!-- Ex-membros - ADMIN ONLY -->
-{% if current_role == 'admin' and ex_membros %}
+<!-- Ex-membros -->
+{% if ex_membros %}
 <div style="margin-top:1.5rem">
   <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
     Ex-membros ({{ ex_membros | length }})

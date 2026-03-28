@@ -74,7 +74,6 @@
 {% set estado_atual = presc.get('estado','sem-registo') if presc else 'sem-registo' %}
 <div class="membro-card estado-{{ estado_atual }}" id="card-{{ elem.id }}">
   <div class="membro-nome">{{ elem.nome }}</div>
-  {% if current_role == 'admin' %}
   <div class="estado-btns">
     <button class="estado-btn {% if estado_atual == 'a-horas'  %}active-a-horas{% endif %}"
             onclick="setEstado(this,'a-horas',{{ elem.id }})">✓ A horas</button>
@@ -83,19 +82,6 @@
     <button class="estado-btn {% if estado_atual == 'nao-veio' %}active-nao-veio{% endif %}"
             onclick="setEstado(this,'nao-veio',{{ elem.id }})">✗ Não veio</button>
   </div>
-  {% else %}
-  <div style="margin-top:.6rem; font-size:14px; color:var(--text2)">
-    {% if estado_atual == 'a-horas' %}
-    <span class="stat-pill stat-verde">✓ Estava a horas</span>
-    {% elif estado_atual == 'atrasado' %}
-    <span class="stat-pill stat-amber">⏱ Chegou atrasado</span>
-    {% elif estado_atual == 'nao-veio' %}
-    <span class="stat-pill stat-red">✗ Não compareceu</span>
-    {% else %}
-    <span class="stat-pill stat-grey">— Sem registo</span>
-    {% endif %}
-  </div>
-  {% endif %}
 </div>
 {% endfor %}
 {% endif %}

@@ -50,12 +50,9 @@ git push -u origin main
    - **Runtime**: Docker
    - **Plan**: Free
 4. Em **Environment Variables**, adiciona:
-   - `APP_PASSWORD_ADMIN` = password para o gestor (ex: `Admin@2025`)
-   - `APP_PASSWORD_MEMBRO` = password para membros (ex: `Membro@2025`)
-   - `SECRET_KEY` = qualquer string aleatória longa (O Render gera automaticamente)
+   - `APP_PASSWORD` = a password que quiseres (ex: `Tuna@2025`)
+   - `SECRET_KEY` = qualquer string aleatória longa
 5. Clica **Create Web Service**
-
-**Nota**: Se deixares `APP_PASSWORD` vazio, o sistema usa `APP_PASSWORD_ADMIN` e `APP_PASSWORD_MEMBRO`. Se apenas tiveres `APP_PASSWORD`, ambos usarão essa password.
 
 ### 2.3 Aguardar o deploy
 - O Render vai construir a app (~3-5 minutos na primeira vez)
@@ -66,26 +63,12 @@ git push -u origin main
 
 ## Passo 3 — Usar a app
 
-### Dois tipos de utilizadores:
+1. Abre o URL no browser (qualquer dispositivo)
+2. Entra com a password que definiste
+3. Vai a **Membros** → adiciona todos os elementos da tuna
+4. Volta a **Eventos** → cria um novo evento com as opções da poll
 
-**ADMIN** (O gestor — TU):
-1. Abre o URL e faz login com `APP_PASSWORD_ADMIN`
-2. Acesso completo: adiciona membros, cria eventos, regista presença, etc.
-3. Menu: Eventos, Ensaios, **Membros**, Stats, **Backup**
-
-**MEMBRO** (Os outros):
-1. Abre o URL e faz login com `APP_PASSWORD_MEMBRO`
-2. Acesso limitado: vê eventos, ensaios, stats, mas não consegue editar
-3. Menu: Eventos, Ensaios, Stats (sem Membros, sem Backup)
-4. Consegue ver sua presença e a dos outros, mas não consegue alterar
-
-### Primeiros passos (como ADMIN):
-1. Login com `APP_PASSWORD_ADMIN`
-2. Vai a **Membros** → adiciona todos os elementos da tuna
-3. Volta a **Eventos** → cria um novo evento com as opções da poll
-4. Partilha `APP_PASSWORD_MEMBRO` com os outros membros
-
-### Registar votos via screenshot (ADMIN):
+### Registar votos via screenshot:
 1. No WhatsApp, clica na poll → **View votes**
 2. Seleciona uma opção (ex: "Sim")
 3. Tira screenshot do ecrã com os nomes visíveis
@@ -97,25 +80,12 @@ git push -u origin main
 
 ## Passo 4 — Partilhar com outros membros
 
-**Tu (Admin)** pedes ao gestor do Render.com o URL e as duas passwords:
-- `APP_PASSWORD_ADMIN` - para ti gerir tudo
-- `APP_PASSWORD_MEMBRO` - para os outros membros
-
-Depois, partilhas com os outros apenas:
-- **URL** da app (ex: `https://tuna-disponibilidades.onrender.com`)
-- **Password de membro** (`APP_PASSWORD_MEMBRO`)
-
-E dizes: "Entra com esta password e consegues ver os eventos e tua presença" 
-
-Os membros **não conseguem**:
-- Adicionar/editar membros
-- Criar novos eventos
-- Registar presença nos ensaios (admin-only)
-- Aceder a backup/restore
+Basta enviares o URL e a password pelo WhatsApp da tuna.
+Qualquer pessoa pode aceder e registar respostas.
 
 ---
 
-## Passo 5 — Atualizar a app no futuro
+## Atualizar a app no futuro
 
 Sempre que fizeres alterações ao código:
 
@@ -125,16 +95,9 @@ git commit -m "descrição da alteração"
 git push
 ```
 
-O Render faz o re-deploy automaticamente (no prazo de poucos minutos).
+O Render faz o re-deploy automaticamente.
 
 ---
-
-## Backward Compatibility
-
-Se apenas tiveres definido `APP_PASSWORD` (configuração antiga), o sistema funciona:
-- Ambos os modos (admin e membro) usam a mesma password
-- A app continua a funcionar sem quebras
-- Pode atualizar para `APP_PASSWORD_ADMIN` e `APP_PASSWORD_MEMBRO` quando quiser
 
 ## Mudar a password
 

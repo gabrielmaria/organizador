@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Instrumentos — {{ ev.nome }}{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.25rem">
+  <div style="flex:1;min-width:0">
+    <h1 style="font-size:18px;font-weight:700">🎸 Instrumentos</h1>
+    <span class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">{{ ev.nome }}</span>
+  </div>
+  <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm">← Tabela</a>
+</div>
+
+<!-- Resumo de instrumentos -->
+{% if instr_count %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+  Resumo — {{ vai | length }} pessoa{{ 's' if vai | length != 1 else '' }} confirmada{{ 's' if vai | length != 1 else '' }}
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.5rem;margin-bottom:1.25rem">
+  {% for nome_instr, count in instr_count.items() | sort(attribute='1', reverse=True) %}
+  <div class="card" style="padding:1rem;text-align:center;margin:0">
+    <div style="font-size:32px;font-weight:800;color:var(--blue)">{{ count }}</div>
+    <div style="font-size:14px;font-weight:600;margin-top:4px">{{ nome_instr }}</div>
+  </div>
+  {% endfor %}
+  {% set sem_instr = vai | selectattr('instrumento', 'equalto', '') | list | length + vai | rejectattr('instrumento') | list | length %}
+  {% if sem_instr > 0 %}
+  <div class="card" style="padding:1rem;text-align:center;margin:0">
+    <div style="font-size:32px;font-weight:800;color:var(--text3)">{{ sem_instr }}</div>
+    <div style="font-size:14px;font-weight:600;margin-top:4px;color:var(--text3)">sem instrumento</div>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:2rem;color:var(--text3);margin-bottom:1rem">
+  Nenhum instrumento atribuído ainda.<br>
+  <a href="{{ url_for('elementos') }}" style="color:var(--blue)">Vai à página de Membros</a> para atribuir instrumentos.
+</div>
+{% endif %}
+
+<!-- Quem vai -->
+{% if vai %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+  ✓ Confirmados ({{ vai | length }})
+</div>
+<div class="card" style="padding:.5rem;margin-bottom:1rem">
+  {% for elem in vai %}
+  {% set resps = resp_map.get(elem.id, []) %}
+  <div style="display:flex;align-items:center;gap:.5rem;padding:.65rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
+    <span style="flex:1;font-weight:500">{{ elem.nome }}</span>
+    {% if elem.instrumento %}
+    <span style="font-size:13px;background:var(--blue-bg);color:var(--blue);padding:3px 10px;border-radius:12px;font-weight:500">{{ elem.instrumento }}</span>
+    {% else %}
+    <span style="font-size:12px;color:var(--text3)">sem instrumento</span>
+    {% endif %}
+    {% for op in opcoes_sim %}
+      {% if op in resps %}
+      {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+      <span class="badge badge-{{ slug }}">{{ op }}</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Quem não vai -->
+{% if nao %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+  ✗ Não vão ({{ nao | length }})
+</div>
+<div class="card" style="padding:.5rem;margin-bottom:1rem;opacity:.7">
+  {% for elem in nao %}
+  <div style="display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
+    <span style="flex:1;color:var(--text2)">{{ elem.nome }}</span>
+    {% set resps = resp_map.get(elem.id, []) %}
+    {% for op in resps %}
+    {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
+    <span class="badge badge-{{ slug }}">{{ op }}</span>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Sem resposta -->
+{% if sem_resp %}
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+  — Sem resposta ({{ sem_resp | length }})
+</div>
+<div class="card" style="padding:.5rem;opacity:.5">
+  {% for elem in sem_resp %}
+  <div style="padding:.6rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %};color:var(--text3)">
+    {{ elem.nome }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

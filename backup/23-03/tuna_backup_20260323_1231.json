@@ -1,0 +1,832 @@
+{
+  "versao": 1,
+  "exportado": "2026-03-23 12:31:05",
+  "elementos": [
+    {
+      "id": 1,
+      "nome": "Gonçalo Barata",
+      "nome_whatsapp": "Gonçalo Barata",
+      "categoria": "Ali-Bobó",
+      "ordem": 1,
+      "ativo": 1,
+      "instrumento": "Percussão"
+    },
+    {
+      "id": 3,
+      "nome": "André Pais",
+      "nome_whatsapp": "André Pais",
+      "categoria": "Camelo",
+      "ordem": 21,
+      "ativo": 1,
+      "instrumento": "Pandeireta"
+    },
+    {
+      "id": 4,
+      "nome": "Renato Morais",
+      "nome_whatsapp": "Renato Morais",
+      "categoria": "Xeque",
+      "ordem": 14,
+      "ativo": 1,
+      "instrumento": "Bandolim"
+    },
+    {
+      "id": 5,
+      "nome": "Pedro Rochinha",
+      "nome_whatsapp": "Pedro Rochinha",
+      "categoria": "Camelo",
+      "ordem": 30,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 6,
+      "nome": "Gabriel Maria",
+      "nome_whatsapp": "You",
+      "categoria": "Xeque",
+      "ordem": 19,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 7,
+      "nome": "Mário Lousada",
+      "nome_whatsapp": "Mário Lousada",
+      "categoria": "Camelo",
+      "ordem": 24,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 8,
+      "nome": "Jorge Rodrigues",
+      "nome_whatsapp": "Rafael \"Bolhas\" Rodrigues",
+      "categoria": "Xeque",
+      "ordem": 0,
+      "ativo": 1,
+      "instrumento": "Acordeão"
+    },
+    {
+      "id": 9,
+      "nome": "Rui Jesus",
+      "nome_whatsapp": "Rui \"Zinho\" Jesus",
+      "categoria": "Xeque",
+      "ordem": 1,
+      "ativo": 1,
+      "instrumento": "Saxofone"
+    },
+    {
+      "id": 10,
+      "nome": "Diogo Guimarães",
+      "nome_whatsapp": "Diogo \"Retrete Sangalo\" Guimarães",
+      "categoria": "Xeque",
+      "ordem": 3,
+      "ativo": 1,
+      "instrumento": "Acordeão"
+    },
+    {
+      "id": 11,
+      "nome": "Rafael Seco",
+      "nome_whatsapp": "Rafael \"Barril\" Seco",
+      "categoria": "Xeque",
+      "ordem": 4,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 12,
+      "nome": "Simão Lopes",
+      "nome_whatsapp": "Simão \"Sôr Agente\" Lopes",
+      "categoria": "Xeque",
+      "ordem": 6,
+      "ativo": 1,
+      "instrumento": "Bandolim"
+    },
+    {
+      "id": 13,
+      "nome": "Rodrigo Santos",
+      "nome_whatsapp": "Rodrigo ''Perro da Covilhã'' Santos",
+      "categoria": "Xeque",
+      "ordem": 7,
+      "ativo": 1,
+      "instrumento": "Bandolim"
+    },
+    {
+      "id": 14,
+      "nome": "Cláudio Costa",
+      "nome_whatsapp": "Cláudio \"WWC\" Costa",
+      "categoria": "Xeque",
+      "ordem": 8,
+      "ativo": 1,
+      "instrumento": "Percussão"
+    },
+    {
+      "id": 15,
+      "nome": "Daniel Pedrosa",
+      "nome_whatsapp": "Daniel ''Incontinência'' Pedrosa",
+      "categoria": "Xeque",
+      "ordem": 10,
+      "ativo": 1,
+      "instrumento": "Percussão"
+    },
+    {
+      "id": 16,
+      "nome": "Alexandre Pinho",
+      "nome_whatsapp": "Alexandre Pinho",
+      "categoria": "Xeque",
+      "ordem": 11,
+      "ativo": 1,
+      "instrumento": "Pandeireta"
+    },
+    {
+      "id": 17,
+      "nome": "João Pereira",
+      "nome_whatsapp": "João '' Dom Quispote'' Pereira",
+      "categoria": "Xeque",
+      "ordem": 12,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 18,
+      "nome": "Francisco Apolinário",
+      "nome_whatsapp": "Francisco \"Casper\" Apolinário",
+      "categoria": "Xeque",
+      "ordem": 13,
+      "ativo": 1,
+      "instrumento": "Bandolim"
+    },
+    {
+      "id": 19,
+      "nome": "Jorge Afonso",
+      "nome_whatsapp": "Jorge \"Cachoeira\" Afonso",
+      "categoria": "Xeque",
+      "ordem": 15,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 20,
+      "nome": "Dinis Santos",
+      "nome_whatsapp": "Dinis Santos",
+      "categoria": "Xeque",
+      "ordem": 16,
+      "ativo": 1,
+      "instrumento": "Violino"
+    },
+    {
+      "id": 21,
+      "nome": "Diogo Baptista",
+      "nome_whatsapp": "Diogo Baptista",
+      "categoria": "Xeque",
+      "ordem": 17,
+      "ativo": 1,
+      "instrumento": "Estandarte"
+    },
+    {
+      "id": 22,
+      "nome": "João Paiva",
+      "nome_whatsapp": "João Paiva",
+      "categoria": "Xeque",
+      "ordem": 18,
+      "ativo": 1,
+      "instrumento": "Cavaquinho"
+    },
+    {
+      "id": 23,
+      "nome": "Vasco Nunes",
+      "nome_whatsapp": "Vasco Nunes",
+      "categoria": "Camelo",
+      "ordem": 19,
+      "ativo": 1,
+      "instrumento": "Contrabaixo"
+    },
+    {
+      "id": 24,
+      "nome": "Tiago Valente",
+      "nome_whatsapp": "Tiaguito",
+      "categoria": "Camelo",
+      "ordem": 20,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 25,
+      "nome": "Luís David",
+      "nome_whatsapp": "Luís David",
+      "categoria": "Camelo",
+      "ordem": 22,
+      "ativo": 1,
+      "instrumento": "Saxofone"
+    },
+    {
+      "id": 26,
+      "nome": "Daniel Crisóstomo",
+      "nome_whatsapp": "Daniel Crisóstomo",
+      "categoria": "Camelo",
+      "ordem": 23,
+      "ativo": 1,
+      "instrumento": "Cavaquinho"
+    },
+    {
+      "id": 27,
+      "nome": "Nuno Santos",
+      "nome_whatsapp": "Nuno Santos",
+      "categoria": "Camelo",
+      "ordem": 25,
+      "ativo": 1,
+      "instrumento": "Pandeireta"
+    },
+    {
+      "id": 28,
+      "nome": "Rodrigo Adegas",
+      "nome_whatsapp": "Rodrigo Adegas",
+      "categoria": "Camelo",
+      "ordem": 26,
+      "ativo": 1,
+      "instrumento": "Cavaquinho"
+    },
+    {
+      "id": 29,
+      "nome": "Rafael Mascarenhas",
+      "nome_whatsapp": "Rafael Mascarenhas",
+      "categoria": "Camelo",
+      "ordem": 31,
+      "ativo": 1,
+      "instrumento": "Pandeireta"
+    },
+    {
+      "id": 30,
+      "nome": "Daniel Cipriano",
+      "nome_whatsapp": "Daniel Cipriano",
+      "categoria": "Camelo",
+      "ordem": 27,
+      "ativo": 1,
+      "instrumento": "Acordeão"
+    },
+    {
+      "id": 31,
+      "nome": "José Bernardo",
+      "nome_whatsapp": "José Bernardo",
+      "categoria": "Camelo",
+      "ordem": 28,
+      "ativo": 1,
+      "instrumento": "Estandarte"
+    },
+    {
+      "id": 32,
+      "nome": "Bernardo Moura",
+      "nome_whatsapp": "Bernardo Moura",
+      "categoria": "Camelo",
+      "ordem": 29,
+      "ativo": 1,
+      "instrumento": "Flauta"
+    },
+    {
+      "id": 33,
+      "nome": "Francisco Garrido",
+      "nome_whatsapp": "Francisco Garrido",
+      "categoria": "Camelo",
+      "ordem": 34,
+      "ativo": 1,
+      "instrumento": "Estandarte"
+    },
+    {
+      "id": 34,
+      "nome": "António Gomes",
+      "nome_whatsapp": "António Gomes",
+      "categoria": "Camelo",
+      "ordem": 32,
+      "ativo": 1,
+      "instrumento": "Contrabaixo"
+    },
+    {
+      "id": 35,
+      "nome": "Candido Gonçalves",
+      "nome_whatsapp": "Candido Gonçalves",
+      "categoria": "Camelo",
+      "ordem": 33,
+      "ativo": 1,
+      "instrumento": "Bandolim"
+    },
+    {
+      "id": 36,
+      "nome": "Marco Oliveira",
+      "nome_whatsapp": "Marco Oliveira",
+      "categoria": "Ali-Bobó",
+      "ordem": 0,
+      "ativo": 1,
+      "instrumento": "Acordeão"
+    },
+    {
+      "id": 37,
+      "nome": "António Varela",
+      "nome_whatsapp": "António Varela",
+      "categoria": "Ali-Bobó",
+      "ordem": 2,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 38,
+      "nome": "Gabriel Baltazar",
+      "nome_whatsapp": "Gabriel Baltazar",
+      "categoria": "Ali-Bobó",
+      "ordem": 3,
+      "ativo": 1,
+      "instrumento": "Pandeireta"
+    },
+    {
+      "id": 39,
+      "nome": "Mário Gonçalves",
+      "nome_whatsapp": "Mário \"Chorão\" Gonçalves",
+      "categoria": "Xeque",
+      "ordem": 5,
+      "ativo": 1,
+      "instrumento": "Guitarra"
+    },
+    {
+      "id": 40,
+      "nome": "Henrique Cabral",
+      "nome_whatsapp": "Henrique “Cadera Aguilera” Cabral",
+      "categoria": "Xeque",
+      "ordem": 9,
+      "ativo": 1,
+      "instrumento": "Estandarte"
+    },
+    {
+      "id": 41,
+      "nome": "André Miranda",
+      "nome_whatsapp": "André \"Estupido\" Miranda",
+      "categoria": "Xeque",
+      "ordem": 2,
+      "ativo": 1,
+      "instrumento": "Cavaquinho"
+    }
+  ],
+  "eventos": [
+    {
+      "id": 16,
+      "nome": "(9/MAR, Segunda - Durante a tarde ) - Serenatas às funcionarias da UBI - Reitoria e Faculdades",
+      "opcoes": "Não\nSim\nLevo Carro",
+      "criado": "23/03/2026 12:00",
+      "data_evento": "",
+      "estado": "nao-aceite"
+    },
+    {
+      "id": 18,
+      "nome": "(12/Mar, Quinta - 18h30) - tomada de posse desporto - Anfiteatro 7.22",
+      "opcoes": "Sim\nNão\nLevo carro",
+      "criado": "23/03/2026 12:16",
+      "data_evento": "",
+      "estado": "nao-aceite"
+    }
+  ],
+  "respostas": [
+    {
+      "id": 1,
+      "evento_id": 16,
+      "elemento_id": 6,
+      "opcao": "Não"
+    },
+    {
+      "id": 2,
+      "evento_id": 16,
+      "elemento_id": 3,
+      "opcao": "Não"
+    },
+    {
+      "id": 3,
+      "evento_id": 16,
+      "elemento_id": 24,
+      "opcao": "Não"
+    },
+    {
+      "id": 4,
+      "evento_id": 16,
+      "elemento_id": 16,
+      "opcao": "Não"
+    },
+    {
+      "id": 5,
+      "evento_id": 16,
+      "elemento_id": 13,
+      "opcao": "Não"
+    },
+    {
+      "id": 6,
+      "evento_id": 16,
+      "elemento_id": 31,
+      "opcao": "Não"
+    },
+    {
+      "id": 7,
+      "evento_id": 16,
+      "elemento_id": 27,
+      "opcao": "Não"
+    },
+    {
+      "id": 8,
+      "evento_id": 16,
+      "elemento_id": 1,
+      "opcao": "Não"
+    },
+    {
+      "id": 9,
+      "evento_id": 16,
+      "elemento_id": 37,
+      "opcao": "Não"
+    },
+    {
+      "id": 10,
+      "evento_id": 16,
+      "elemento_id": 33,
+      "opcao": "Não"
+    },
+    {
+      "id": 11,
+      "evento_id": 16,
+      "elemento_id": 28,
+      "opcao": "Não"
+    },
+    {
+      "id": 12,
+      "evento_id": 16,
+      "elemento_id": 18,
+      "opcao": "Não"
+    },
+    {
+      "id": 13,
+      "evento_id": 16,
+      "elemento_id": 17,
+      "opcao": "Não"
+    },
+    {
+      "id": 14,
+      "evento_id": 16,
+      "elemento_id": 7,
+      "opcao": "Não"
+    },
+    {
+      "id": 15,
+      "evento_id": 16,
+      "elemento_id": 21,
+      "opcao": "Não"
+    },
+    {
+      "id": 16,
+      "evento_id": 16,
+      "elemento_id": 4,
+      "opcao": "Não"
+    },
+    {
+      "id": 17,
+      "evento_id": 16,
+      "elemento_id": 34,
+      "opcao": "Não"
+    },
+    {
+      "id": 18,
+      "evento_id": 16,
+      "elemento_id": 40,
+      "opcao": "Não"
+    },
+    {
+      "id": 19,
+      "evento_id": 16,
+      "elemento_id": 30,
+      "opcao": "Não"
+    },
+    {
+      "id": 20,
+      "evento_id": 16,
+      "elemento_id": 22,
+      "opcao": "Não"
+    },
+    {
+      "id": 21,
+      "evento_id": 16,
+      "elemento_id": 32,
+      "opcao": "Não"
+    },
+    {
+      "id": 22,
+      "evento_id": 16,
+      "elemento_id": 19,
+      "opcao": "Não"
+    },
+    {
+      "id": 23,
+      "evento_id": 16,
+      "elemento_id": 11,
+      "opcao": "Não"
+    },
+    {
+      "id": 24,
+      "evento_id": 16,
+      "elemento_id": 12,
+      "opcao": "Não"
+    },
+    {
+      "id": 25,
+      "evento_id": 16,
+      "elemento_id": 8,
+      "opcao": "Não"
+    },
+    {
+      "id": 26,
+      "evento_id": 16,
+      "elemento_id": 10,
+      "opcao": "Sim"
+    },
+    {
+      "id": 27,
+      "evento_id": 16,
+      "elemento_id": 9,
+      "opcao": "Sim"
+    },
+    {
+      "id": 28,
+      "evento_id": 16,
+      "elemento_id": 14,
+      "opcao": "Sim"
+    },
+    {
+      "id": 29,
+      "evento_id": 16,
+      "elemento_id": 36,
+      "opcao": "Sim"
+    },
+    {
+      "id": 30,
+      "evento_id": 16,
+      "elemento_id": 4,
+      "opcao": "Sim"
+    },
+    {
+      "id": 31,
+      "evento_id": 16,
+      "elemento_id": 26,
+      "opcao": "Sim"
+    },
+    {
+      "id": 32,
+      "evento_id": 16,
+      "elemento_id": 3,
+      "opcao": "Sim"
+    },
+    {
+      "id": 33,
+      "evento_id": 16,
+      "elemento_id": 35,
+      "opcao": "Sim"
+    },
+    {
+      "id": 34,
+      "evento_id": 16,
+      "elemento_id": 5,
+      "opcao": "Sim"
+    },
+    {
+      "id": 35,
+      "evento_id": 16,
+      "elemento_id": 25,
+      "opcao": "Sim"
+    },
+    {
+      "id": 36,
+      "evento_id": 16,
+      "elemento_id": 23,
+      "opcao": "Sim"
+    },
+    {
+      "id": 37,
+      "evento_id": 16,
+      "elemento_id": 25,
+      "opcao": "Levo Carro"
+    },
+    {
+      "id": 38,
+      "evento_id": 18,
+      "elemento_id": 6,
+      "opcao": "Sim"
+    },
+    {
+      "id": 39,
+      "evento_id": 18,
+      "elemento_id": 25,
+      "opcao": "Sim"
+    },
+    {
+      "id": 40,
+      "evento_id": 18,
+      "elemento_id": 15,
+      "opcao": "Sim"
+    },
+    {
+      "id": 41,
+      "evento_id": 18,
+      "elemento_id": 36,
+      "opcao": "Sim"
+    },
+    {
+      "id": 42,
+      "evento_id": 18,
+      "elemento_id": 35,
+      "opcao": "Sim"
+    },
+    {
+      "id": 43,
+      "evento_id": 18,
+      "elemento_id": 1,
+      "opcao": "Sim"
+    },
+    {
+      "id": 44,
+      "evento_id": 18,
+      "elemento_id": 33,
+      "opcao": "Sim"
+    },
+    {
+      "id": 45,
+      "evento_id": 18,
+      "elemento_id": 37,
+      "opcao": "Sim"
+    },
+    {
+      "id": 46,
+      "evento_id": 18,
+      "elemento_id": 34,
+      "opcao": "Sim"
+    },
+    {
+      "id": 47,
+      "evento_id": 18,
+      "elemento_id": 31,
+      "opcao": "Sim"
+    },
+    {
+      "id": 48,
+      "evento_id": 18,
+      "elemento_id": 29,
+      "opcao": "Sim"
+    },
+    {
+      "id": 49,
+      "evento_id": 18,
+      "elemento_id": 28,
+      "opcao": "Sim"
+    },
+    {
+      "id": 50,
+      "evento_id": 18,
+      "elemento_id": 7,
+      "opcao": "Sim"
+    },
+    {
+      "id": 51,
+      "evento_id": 18,
+      "elemento_id": 3,
+      "opcao": "Sim"
+    },
+    {
+      "id": 52,
+      "evento_id": 18,
+      "elemento_id": 14,
+      "opcao": "Sim"
+    },
+    {
+      "id": 53,
+      "evento_id": 18,
+      "elemento_id": 30,
+      "opcao": "Sim"
+    },
+    {
+      "id": 54,
+      "evento_id": 18,
+      "elemento_id": 22,
+      "opcao": "Sim"
+    },
+    {
+      "id": 55,
+      "evento_id": 18,
+      "elemento_id": 13,
+      "opcao": "Sim"
+    },
+    {
+      "id": 56,
+      "evento_id": 18,
+      "elemento_id": 11,
+      "opcao": "Sim"
+    },
+    {
+      "id": 57,
+      "evento_id": 18,
+      "elemento_id": 23,
+      "opcao": "Sim"
+    },
+    {
+      "id": 58,
+      "evento_id": 18,
+      "elemento_id": 21,
+      "opcao": "Sim"
+    },
+    {
+      "id": 59,
+      "evento_id": 18,
+      "elemento_id": 12,
+      "opcao": "Não"
+    },
+    {
+      "id": 60,
+      "evento_id": 18,
+      "elemento_id": 26,
+      "opcao": "Não"
+    },
+    {
+      "id": 61,
+      "evento_id": 18,
+      "elemento_id": 24,
+      "opcao": "Não"
+    },
+    {
+      "id": 62,
+      "evento_id": 18,
+      "elemento_id": 8,
+      "opcao": "Não"
+    },
+    {
+      "id": 63,
+      "evento_id": 18,
+      "elemento_id": 18,
+      "opcao": "Não"
+    },
+    {
+      "id": 64,
+      "evento_id": 18,
+      "elemento_id": 40,
+      "opcao": "Não"
+    },
+    {
+      "id": 65,
+      "evento_id": 18,
+      "elemento_id": 39,
+      "opcao": "Não"
+    },
+    {
+      "id": 66,
+      "evento_id": 18,
+      "elemento_id": 27,
+      "opcao": "Não"
+    },
+    {
+      "id": 67,
+      "evento_id": 18,
+      "elemento_id": 5,
+      "opcao": "Não"
+    },
+    {
+      "id": 68,
+      "evento_id": 18,
+      "elemento_id": 4,
+      "opcao": "Não"
+    },
+    {
+      "id": 69,
+      "evento_id": 18,
+      "elemento_id": 17,
+      "opcao": "Não"
+    },
+    {
+      "id": 70,
+      "evento_id": 18,
+      "elemento_id": 9,
+      "opcao": "Não"
+    },
+    {
+      "id": 71,
+      "evento_id": 18,
+      "elemento_id": 16,
+      "opcao": "Não"
+    },
+    {
+      "id": 72,
+      "evento_id": 18,
+      "elemento_id": 25,
+      "opcao": "Levo carro"
+    },
+    {
+      "id": 73,
+      "evento_id": 18,
+      "elemento_id": 15,
+      "opcao": "Levo carro"
+    },
+    {
+      "id": 74,
+      "evento_id": 18,
+      "elemento_id": 7,
+      "opcao": "Levo carro"
+    }
+  ],
+  "ensaios": [],
+  "presencas": []
+}
