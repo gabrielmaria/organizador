@@ -47,10 +47,13 @@
 <div class="row" style="margin-bottom:1rem">
   <h1 style="font-size:20px;font-weight:700">Eventos</h1>
   <div class="spacer"></div>
+  {% if current_role == 'admin' %}
   <a href="{{ url_for('novo_evento') }}" class="btn btn-sm">+ Manual</a>
+  {% endif %}
 </div>
 
-<!-- Importar CSV -->
+<!-- Importar CSV - ADMIN ONLY -->
+{% if current_role == 'admin' %}
 <div class="card" style="margin-bottom:1rem">
   <div class="card-title">📥 Criar evento a partir do CSV</div>
   <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui.</p>
@@ -61,6 +64,7 @@
     </div>
   </form>
 </div>
+{% endif %}
 
 <!-- Filtros -->
 <div class="filter-tabs">
@@ -99,13 +103,20 @@
         {% endif %}
       </div>
     </div>
+    {% if current_role == 'admin' %}
     <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Editar</a>
+    {% else %}
+    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Ver</a>
+    {% endif %}
     <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>
+    {% if current_role == 'admin' %}
     <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Apagar este evento?')">
       <button class="btn btn-sm btn-danger">✕</button>
     </form>
+    {% endif %}
   </div>
-  <!-- Botões de estado -->
+  <!-- Botões de estado - ADMIN ONLY -->
+  {% if current_role == 'admin' %}
   <div class="estado-btns">
     <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
       <input type="hidden" name="estado" value="aceite">
@@ -120,6 +131,7 @@
       <button class="estado-btn {% if not ev.estado or ev.estado == 'por-validar' %}btn-validar{% endif %}">⏳ Por validar</button>
     </form>
   </div>
+  {% endif %}
 </div>
 {% endfor %}
 {% else %}

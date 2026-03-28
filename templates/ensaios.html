@@ -6,6 +6,8 @@
   <h1 style="font-size:20px;font-weight:700">Ensaios</h1>
 </div>
 
+<!-- Novo ensaio - ADMIN ONLY -->
+{% if current_role == 'admin' %}
 <div class="card">
   <div class="card-title">📅 Novo ensaio</div>
   <form method="post" action="{{ url_for('novo_ensaio') }}">
@@ -14,6 +16,7 @@
     <button class="btn btn-primary" type="submit">Criar ensaio</button>
   </form>
 </div>
+{% endif %}
 
 {% if ensaios %}
 {% for ens in ensaios %}
@@ -24,9 +27,11 @@
       <div class="muted">criado {{ ens.criado }}</div>
     </div>
     <a href="{{ url_for('ensaio_detail', eid=ens.id) }}" class="btn btn-sm btn-primary">Abrir</a>
+    {% if current_role == 'admin' %}
     <form method="post" action="{{ url_for('del_ensaio', eid=ens.id) }}" onsubmit="return confirm('Apagar este ensaio e todas as presenças?')">
       <button class="btn btn-sm btn-danger">✕</button>
     </form>
+    {% endif %}
   </div>
 </div>
 {% endfor %}
