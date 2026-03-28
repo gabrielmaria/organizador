@@ -1,14 +1,43 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Login — Desertuna{% endblock %}
 {% block content %}
-<div style="max-width:340px;margin:4rem auto">
-  <div class="card">
-    <h1 style="text-align:center;margin-bottom:1.5rem">🦊 Desertuna<br><span style="font-size:14px;font-weight:400;color:#5f5e5a">Disponibilidades</span></h1>
+<div style="max-width:380px;margin:3rem auto">
+  <div class="card" style="padding:2.5rem;text-align:center;border:2px solid #d4a574">
+    <!-- Desertuna Logo -->
+    <svg width="64" height="64" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1rem">
+      <defs>
+        <linearGradient id="desertGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#d4a574;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#8b6914;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Sand dune shape -->
+      <path d="M 10 70 Q 30 20 50 30 Q 70 20 90 70 L 90 95 Q 50 105 10 95 Z" fill="url(#desertGrad)" stroke="#5d4d0f" stroke-width="1.5"/>
+      <!-- Desert star/sun -->
+      <circle cx="50" cy="35" r="12" fill="#ffd700" opacity="0.9"/>
+      <!-- Musical notes on the dune -->
+      <g>
+        <!-- Note 1 -->
+        <circle cx="35" cy="55" r="2" fill="#fff" opacity="0.8"/>
+        <path d="M 37 55 Q 40 45 42 35" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.8"/>
+        <!-- Note 2 -->
+        <circle cx="65" cy="50" r="2" fill="#fff" opacity="0.8"/>
+        <path d="M 67 50 Q 70 40 72 30" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.8"/>
+      </g>
+    </svg>
+    
+    <h1 style="margin-bottom:0.5rem;background:linear-gradient(135deg, #d4a574, #8b6914);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:28px">DESERTUNA</h1>
+    <p style="color:#5f5e5a;font-size:14px;font-weight:500;margin-bottom:1.75rem;letter-spacing:1px">Disponibilidades & Presenças</p>
+    
     <form method="post">
-      <label>Password</label>
-      <input type="password" name="password" autofocus style="margin-bottom:1rem">
-      <button class="btn btn-primary" style="width:100%">Entrar</button>
+      <label style="font-weight:600">Password</label>
+      <input type="password" name="password" placeholder="Insere a password" autofocus style="margin-bottom:1.5rem;padding:12px">
+      <button class="btn btn-primary" style="width:100%;padding:12px;font-size:16px;font-weight:600">🎸 Entrar</button>
     </form>
+    
+    <div style="margin-top:1.5rem;font-size:12px;color:#9a9890">
+      <p style="margin:0">🔐 Login seguro com password</p>
+    </div>
   </div>
 </div>
 {% endblock %}

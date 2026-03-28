@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Organizador Tunastico{% endblock %}</title>
+<title>{% block title %}Organizador Desertuna{% endblock %}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -57,7 +57,31 @@ textarea{min-height:100px;resize:vertical}
 <body>
 {% if session.auth %}
 <nav>
-  <span class="brand">🎵 Tuna</span>
+  <a href="{{ url_for('index') }}" style="display:flex;align-items:center;gap:8px;text-decoration:none;margin-right:auto">
+    <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- Desertuna Logo -->
+      <defs>
+        <linearGradient id="desertGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#d4a574;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#8b6914;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Sand dune shape -->
+      <path d="M 10 70 Q 30 20 50 30 Q 70 20 90 70 L 90 95 Q 50 105 10 95 Z" fill="url(#desertGrad)" stroke="#5d4d0f" stroke-width="1.5"/>
+      <!-- Desert star/sun -->
+      <circle cx="50" cy="35" r="12" fill="#ffd700" opacity="0.9"/>
+      <!-- Musical notes on the dune -->
+      <g>
+        <!-- Note 1 -->
+        <circle cx="35" cy="55" r="2" fill="#fff" opacity="0.8"/>
+        <path d="M 37 55 Q 40 45 42 35" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.8"/>
+        <!-- Note 2 -->
+        <circle cx="65" cy="50" r="2" fill="#fff" opacity="0.8"/>
+        <path d="M 67 50 Q 70 40 72 30" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.8"/>
+      </g>
+    </svg>
+    <span class="brand" style="background:linear-gradient(135deg, #d4a574, #8b6914);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">DESERTUNA</span>
+  </a>
   <a href="{{ url_for('index') }}" class="nav-link">Eventos</a>
   <a href="{{ url_for('ensaios') }}" class="nav-link">Ensaios</a>
   {% if current_role == 'admin' %}
