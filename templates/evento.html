@@ -41,6 +41,7 @@
     <span class="muted">{{ ev.criado }}</span>
   </div>
   <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Ver tabela</a>
+  <a href="{{ url_for('evento_transportes', eid=ev.id) }}" class="btn btn-sm">🚗 Transportes</a>
   {% if current_role == 'admin' %}
   <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" style="display:inline" onsubmit="return confirm('Eliminar evento?')">
     <button class="btn btn-sm btn-danger" type="submit">Eliminar</button>

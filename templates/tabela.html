@@ -21,6 +21,7 @@
     <span class="muted">{{ ev.criado }}</span>
   </div>
   <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm">🎸 Instrumentos</a>
+  <a href="{{ url_for('evento_transportes', eid=ev.id) }}" class="btn btn-sm">🚗 Transportes</a>
   <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">✏️ Editar</a>
 </div>
 

@@ -77,7 +77,9 @@ def init_db():
             categoria     TEXT DEFAULT 'Ali-Bobó',
             ordem         INTEGER DEFAULT 0,
             ativo         INTEGER DEFAULT 1,
-            instrumento   TEXT DEFAULT ''
+            instrumento   TEXT DEFAULT '',
+            pode_levar_carro INTEGER DEFAULT 0,
+            lugares_carro INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS eventos (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,6 +122,8 @@ def init_db():
         "ordem INTEGER DEFAULT 0",
         "ativo INTEGER DEFAULT 1",
         "instrumento TEXT DEFAULT ''",
+        "pode_levar_carro INTEGER DEFAULT 0",
+        "lugares_carro INTEGER DEFAULT 0",
     ]:
         try:
             with get_db() as con:
@@ -300,16 +304,19 @@ def add_elemento():
     nwa         = request.form.get("nome_whatsapp", "").strip()
     categoria   = request.form.get("categoria", "Ali-Bobó").strip()
     instrumento = request.form.get("instrumento", "").strip()
+    pode_levar_carro = request.form.get("pode_levar_carro", "0") == "1"
     try:
         ordem = int(request.form.get("ordem", 0))
+        lugares_carro = int(request.form.get("lugares_carro", 0))
     except ValueError:
         ordem = 0
+        lugares_carro = 0
     if nome:
         try:
             with get_db() as con:
                 con.execute(
-                    "INSERT INTO elementos (nome, nome_whatsapp, categoria, ordem, instrumento) VALUES (?,?,?,?,?)",
-                    (nome, nwa, categoria, ordem, instrumento)
+                    "INSERT INTO elementos (nome, nome_whatsapp, categoria, ordem, instrumento, pode_levar_carro, lugares_carro) VALUES (?,?,?,?,?,?,?)",
+                    (nome, nwa, categoria, ordem, instrumento, int(pode_levar_carro), lugares_carro)
                 )
         except Exception:
             flash(f"'{nome}' ja existe.")
@@ -322,14 +329,17 @@ def edit_elemento(eid):
     nwa         = request.form.get("nome_whatsapp", "").strip()
     categoria   = request.form.get("categoria", "Ali-Bobó").strip()
     instrumento = request.form.get("instrumento", "").strip()
+    pode_levar_carro = request.form.get("pode_levar_carro", "0") == "1"
     try:
         ordem = int(request.form.get("ordem", 0))
+        lugares_carro = int(request.form.get("lugares_carro", 0))
     except ValueError:
         ordem = 0
+        lugares_carro = 0
     with get_db() as con:
         con.execute(
-            "UPDATE elementos SET nome_whatsapp=?, categoria=?, ordem=?, instrumento=? WHERE id=?",
-            (nwa, categoria, ordem, instrumento, eid)
+            "UPDATE elementos SET nome_whatsapp=?, categoria=?, ordem=?, instrumento=?, pode_levar_carro=?, lugares_carro=? WHERE id=?",
+            (nwa, categoria, ordem, instrumento, int(pode_levar_carro), lugares_carro, eid)
         )
     return redirect(url_for("elementos"))
 
@@ -623,6 +633,54 @@ def evento_instrumentos(eid):
                            ev=ev, opcoes=opcoes,
                            vai=vai, nao=nao, sem_resp=s_resp,
                            instr_count=instr_count,
+                           resp_map=resp_map, opcoes_sim=opcoes_sim, current_role=session.get('role', 'membro'))
+
+@app.route("/eventos/<int:eid>/transportes")
+@login_required
+def evento_transportes(eid):
+    with get_db() as con:
+        ev    = con.execute("SELECT * FROM eventos WHERE id=?", (eid,)).fetchone()
+        elems = con.execute("SELECT * FROM elementos WHERE ativo=1 ORDER BY categoria, ordem, nome").fetchall()
+        resps = con.execute(
+            "SELECT elemento_id, opcao FROM respostas WHERE evento_id=?", (eid,)
+        ).fetchall()
+    if not ev:
+        return redirect(url_for("index"))
+
+    opcoes = [o.strip() for o in ev["opcoes"].split("\n") if o.strip()]
+    resp_map = {}
+    for r in resps:
+        if r["opcao"] not in resp_map.setdefault(r["elemento_id"], []):
+            resp_map[r["elemento_id"]].append(r["opcao"])
+
+    # opções que significam "vai" — sim, yes, vou, levo, ou fallback para todas
+    opcoes_sim = [o for o in opcoes if any(s in o.lower() for s in ["sim","yes","vou","levo"])]
+    if not opcoes_sim:
+        opcoes_sim = opcoes
+
+    # separar quem vai, quem não vai, quem não respondeu
+    vai   = [e for e in elems if any(op in resp_map.get(e["id"],[]) for op in opcoes_sim)]
+    nao   = [e for e in elems if e["id"] in resp_map and not any(op in resp_map.get(e["id"],[]) for op in opcoes_sim)]
+    s_resp = [e for e in elems if e["id"] not in resp_map]
+
+    # separar condutores de um total de pessoas a transportar
+    condutores = [e for e in vai if e["pode_levar_carro"]]
+    passou_num_carro = [e for e in vai if not e["pode_levar_carro"]]
+    resto_a_transportar = len(passou_num_carro)  # quantas pessoas precisam de boleia
+
+    # calcular capacidade total
+    capacidade_total = sum(e["lugares_carro"] for e in condutores)
+
+    # simular se consegue transportar
+    deficit = max(0, resto_a_transportar - capacidade_total)
+
+    return render_template("evento_transportes.html",
+                           ev=ev, opcoes=opcoes,
+                           vai=vai, condutores=condutores, passou_num_carro=passou_num_carro,
+                           nao=nao, sem_resp=s_resp,
+                           capacidade_total=capacidade_total,
+                           rest_a_transportar=resto_a_transportar,
+                           deficit=deficit,
                            resp_map=resp_map, opcoes_sim=opcoes_sim, current_role=session.get('role', 'membro'))
 
 # ── Ensaios ───────────────────────────────────────────────────────────────────

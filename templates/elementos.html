@@ -63,6 +63,18 @@
         <input type="text" name="instrumento" placeholder="Ex: Guitarra">
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label style="display:flex;align-items:center;gap:.5rem">
+          <input type="checkbox" name="pode_levar_carro" value="1">
+          Pode levar carro
+        </label>
+      </div>
+      <div>
+        <label>Lugares no carro</label>
+        <input type="number" name="lugares_carro" placeholder="0" min="0" max="10">
+      </div>
+    </div>
     <button class="btn btn-primary btn-sm">Adicionar</button>
   </form>
 </div>
@@ -94,22 +106,32 @@
         {% endif %}
       </div>
       {% if current_role == 'admin' %}
-      <form method="post" action="{{ url_for('edit_elemento', eid=e.id) }}"
-            class="row" style="gap:.5rem;padding-left:26px">
-        <input type="text" name="nome_whatsapp" value="{{ e.nome_whatsapp or '' }}"
-               placeholder="Nome no WhatsApp..."
-               style="flex:1;min-width:80px;font-size:13px;padding:6px 10px">
-        <input type="text" name="instrumento" value="{{ e.instrumento or '' }}"
-               placeholder="Instrumento..."
-               style="width:110px;font-size:13px;padding:6px 10px">
-        <select name="categoria" style="font-size:13px;padding:6px 8px;width:auto">
-          {% for cat2 in hierarquia %}
-          <option value="{{ cat2 }}" {% if e.categoria == cat2 %}selected{% endif %}>{{ cat2 }}</option>
-          {% endfor %}
-        </select>
-        <!-- manter ordem atual ao guardar -->
-        <input type="hidden" name="ordem" value="{{ e.ordem }}">
-        <button class="btn btn-sm">Guardar</button>
+      <form method="post" action="{{ url_for('edit_elemento', eid=e.id) }}">
+        <div class="row" style="gap:.5rem;padding-left:26px;margin-bottom:.4rem">
+          <input type="text" name="nome_whatsapp" value="{{ e.nome_whatsapp or '' }}"
+                 placeholder="Nome no WhatsApp..."
+                 style="flex:1;min-width:80px;font-size:13px;padding:6px 10px">
+          <input type="text" name="instrumento" value="{{ e.instrumento or '' }}"
+                 placeholder="Instrumento..."
+                 style="width:110px;font-size:13px;padding:6px 10px">
+          <select name="categoria" style="font-size:13px;padding:6px 8px;width:auto">
+            {% for cat2 in hierarquia %}
+            <option value="{{ cat2 }}" {% if e.categoria == cat2 %}selected{% endif %}>{{ cat2 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="row" style="gap:.5rem;padding-left:26px;align-items:center">
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:13px">
+            <input type="checkbox" name="pode_levar_carro" value="1" {% if e.pode_levar_carro %}checked{% endif %}>
+            🚗 Carro
+          </label>
+          <input type="number" name="lugares_carro" value="{{ e.lugares_carro or 0 }}"
+                 placeholder="Lugares" min="0" max="10"
+                 style="width:70px;font-size:13px;padding:6px 10px">
+          <!-- manter ordem atual ao guardar -->
+          <input type="hidden" name="ordem" value="{{ e.ordem }}">
+          <button class="btn btn-sm">Guardar</button>
+        </div>
       </form>
       {% else %}
       <div class="row" style="padding-left:26px;color:var(--text2);font-size:13px">
