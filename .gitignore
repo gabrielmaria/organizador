@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual envs
+venv/
+.venv/
+
+# Environment files
+.env
+.env.*
+
+# Database
+*.sqlite3
+*.db
+
+# Backups and exports
+backup/
+tuna_backup*.json
+
+# Local config
+.pastor_config.json
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
