@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Eventos — Tuna{% endblock %}
+{% block head %}
+<style>
+.data-pill{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
+.data-hoje   {background:#78350f22;color:#fbbf24;border:1px solid #78350f55}
+.data-semana {background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.data-passado{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.data-futuro {background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+
+.estado-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+.estado-aceite     {background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.estado-nao-aceite {background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.estado-por-validar{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+
+.filter-tabs{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}
+.filter-tab{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--card2);color:var(--text2);transition:.15s}
+.filter-tab.active{background:var(--accent);color:#0f0f11;border-color:var(--accent);font-weight:600}
+
+.evento-card{transition:.2s;cursor:default}
+.evento-card:hover{border-color:var(--border2)}
+.evento-card.hidden{display:none}
+
+.estado-btns{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.625rem;padding-top:.625rem;border-top:1px solid var(--border)}
+.estado-btn{padding:4px 11px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:.15s;letter-spacing:.2px}
+.estado-btn:hover{border-color:var(--border2);color:var(--text)}
+.estado-btn.ativo-aceite    {background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.estado-btn.ativo-nao-aceite{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.estado-btn.ativo-validar   {background:var(--bg3);color:var(--text2);border-color:var(--border2)}
+
+.import-zone{border:1.5px dashed var(--border2);border-radius:var(--r-lg);padding:1.25rem;transition:.15s}
+.import-zone:hover{border-color:var(--accent-border);background:var(--accent-dim)}
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.5rem">
+  <h1 class="page-title" style="margin-bottom:0">Eventos</h1>
+  <div class="spacer"></div>
+  <a href="{{ url_for('novo_evento') }}" class="btn btn-sm btn-primary">+ Novo</a>
+</div>
+
+<!-- Importar CSV -->
+<div class="import-zone" style="margin-bottom:1.25rem">
+  <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:.5rem">📥 Importar sondagem do WhatsApp</div>
+  <form method="post" action="{{ url_for('importar_csv_novo') }}" enctype="multipart/form-data">
+    <div class="row">
+      <input type="file" name="csv_file" accept=".csv"
+             style="flex:1;border:1px solid var(--border2);border-radius:var(--r);padding:7px 10px;font-size:13px;background:var(--bg3);color:var(--text)">
+      <button class="btn btn-sm btn-primary" type="submit">Criar evento</button>
+    </div>
+  </form>
+</div>
+
+<!-- Filtros -->
+<div class="filter-tabs">
+  <button class="filter-tab active" data-filtro="todos"       onclick="filtrar(this)">Todos ({{ eventos|length }})</button>
+  <button class="filter-tab"        data-filtro="por-validar" onclick="filtrar(this)">⏳ Por validar ({{ eventos|selectattr('estado','equalto','por-validar')|list|length }})</button>
+  <button class="filter-tab"        data-filtro="aceite"      onclick="filtrar(this)">✓ Aceites ({{ eventos|selectattr('estado','equalto','aceite')|list|length }})</button>
+  <button class="filter-tab"        data-filtro="nao-aceite"  onclick="filtrar(this)">✗ Não aceites ({{ eventos|selectattr('estado','equalto','nao-aceite')|list|length }})</button>
+</div>
+
+{% if eventos %}
+{% for ev in eventos %}
+{% set prox_class = ev.nome|proximidade_class %}
+{% set prox_label = ev.nome|proximidade_label %}
+{% set estado = ev.estado or 'por-validar' %}
+<div class="card evento-card" data-estado="{{ estado }}"
+     style="{% if estado=='aceite' %}border-left:2px solid var(--green-border){% elif estado=='nao-aceite' %}border-left:2px solid var(--red-border);opacity:.6{% endif %}">
+  <div style="display:flex;align-items:flex-start;gap:.75rem">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:15px;line-height:1.3;margin-bottom:.35rem">{{ ev.nome }}</div>
+      <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+        <span class="estado-badge estado-{{ estado }}">
+          {% if estado=='aceite' %}✓ Aceite{% elif estado=='nao-aceite' %}✗ Não aceite{% else %}⏳ Por validar{% endif %}
+        </span>
+        {% if prox_label %}<span class="data-pill {{ prox_class }}">{{ prox_label }}</span>{% endif %}
+        <span class="muted" style="font-size:11px">{{ ev.criado }}</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:.3rem;flex-shrink:0">
+      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Editar</a>
+      <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>
+      <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Apagar este evento?')">
+        <button class="btn btn-sm btn-danger">✕</button>
+      </form>
+    </div>
+  </div>
+  <div class="estado-btns">
+    <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
+      <input type="hidden" name="estado" value="aceite">
+      <button class="estado-btn {% if estado=='aceite' %}ativo-aceite{% endif %}">✓ Aceite</button>
+    </form>
+    <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
+      <input type="hidden" name="estado" value="nao-aceite">
+      <button class="estado-btn {% if estado=='nao-aceite' %}ativo-nao-aceite{% endif %}">✗ Não aceite</button>
+    </form>
+    <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
+      <input type="hidden" name="estado" value="por-validar">
+      <button class="estado-btn {% if estado=='por-validar' %}ativo-validar{% endif %}">⏳ Por validar</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div style="text-align:center;padding:4rem 1rem;color:var(--text3)">
+  <div style="font-size:3rem;margin-bottom:.75rem;opacity:.4">🎵</div>
+  <div style="font-size:15px">Nenhum evento ainda.</div>
+  <div class="muted" style="margin-top:.25rem">Importa um CSV ou cria manualmente.</div>
+</div>
+{% endif %}
+
+<script>
+function filtrar(btn) {
+  var f = btn.dataset.filtro;
+  document.querySelectorAll('.filter-tab').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  document.querySelectorAll('.evento-card').forEach(function(c){
+    c.style.display = (f==='todos'||c.dataset.estado===f) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

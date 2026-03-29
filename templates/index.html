@@ -4,63 +4,232 @@
 <style>
 .data-pill {
   display:inline-flex;align-items:center;
-  font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;
+  font-size:12px;font-weight:700;padding:4px 10px;border-radius:16px;
+  letter-spacing:0.2px;
 }
-.data-hoje    { background:#fef9c3;color:#854d0e }
-.data-semana  { background:var(--green-bg);color:var(--green) }
-.data-passado { background:var(--bg);color:var(--text3) }
+.data-hoje    { background:var(--warning-light);color:var(--warning) }
+.data-semana  { background:var(--success-light);color:var(--success) }
+.data-passado { background:var(--border);color:var(--text3) }
 .data-futuro  { background:var(--blue-bg);color:var(--blue) }
 
 .estado-badge {
   display:inline-flex;align-items:center;
-  font-size:12px;font-weight:600;padding:2px 10px;border-radius:12px;
+  font-size:12px;font-weight:700;padding:4px 12px;border-radius:16px;
+  letter-spacing:0.2px;
 }
-.estado-aceite       { background:var(--green-bg);color:var(--green) }
-.estado-nao-aceite   { background:var(--red-bg);color:var(--red) }
-.estado-por-validar  { background:var(--bg);color:var(--text3) }
+.estado-aceite       { background:var(--success-light);color:var(--success) }
+.estado-nao-aceite   { background:var(--danger-light);color:var(--danger) }
+.estado-por-validar  { background:var(--warning-light);color:var(--warning) }
 
-.filter-tabs { display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap }
+.filter-tabs { 
+  display:flex;
+  gap:0.5rem;
+  margin-bottom:1.5rem;
+  flex-wrap:wrap;
+}
 .filter-tab {
-  padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;
-  cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);
-  transition:.15s;
+  padding:8px 18px;
+  border-radius:20px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  border:1.5px solid var(--border);
+  background:var(--panel);
+  color:var(--text2);
+  transition:all 0.2s;
+  letter-spacing:0.2px;
 }
-.filter-tab.active { background:var(--blue);color:#fff;border-color:var(--blue) }
+.filter-tab:hover {
+  border-color:var(--accent);
+  background:var(--accent-dim);
+  color:var(--accent);
+}
+.filter-tab.active { 
+  background:var(--blue);
+  color:white;
+  border-color:var(--blue);
+  font-weight:700;
+}
 
-.evento-card { transition:.15s }
+.evento-card { transition:all 0.2s; }
 .evento-card.hidden { display:none }
 
-.estado-btns { display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem }
-.estado-btn {
-  padding:4px 12px;border-radius:14px;font-size:12px;font-weight:500;
-  cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);
-  transition:.15s;
+.evento-card-header {
+  display:flex;
+  gap:1rem;
+  align-items:flex-start;
+  justify-content:space-between;
+  flex-wrap:wrap;
 }
-.estado-btn:hover { filter:brightness(.96) }
-.estado-btn.btn-aceite     { background:var(--green-bg);color:var(--green);border-color:var(--green-border) }
-.estado-btn.btn-nao-aceite { background:var(--red-bg);color:var(--red);border-color:var(--red-border) }
-.estado-btn.btn-validar    { background:var(--bg);color:var(--text3);border-color:var(--border2) }
+
+.evento-card-title {
+  font-weight:700;
+  font-size:16px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:var(--text);
+}
+
+.evento-card-meta {
+  display:flex;
+  align-items:center;
+  gap:0.75rem;
+  margin-top:0.5rem;
+  flex-wrap:wrap;
+}
+
+.evento-actions {
+  display:flex;
+  gap:0.5rem;
+  flex-wrap:wrap;
+}
+
+.estado-btns { 
+  display:flex;
+  gap:0.5rem;
+  flex-wrap:wrap;
+  margin-top:1rem;
+  padding-top:1rem;
+  border-top:1px solid var(--border);
+}
+.estado-btn {
+  padding:6px 14px;
+  border-radius:16px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  border:1.5px solid var(--border);
+  background:var(--panel);
+  color:var(--text2);
+  transition:all 0.2s;
+  letter-spacing:0.2px;
+}
+.estado-btn:hover { 
+  border-color:var(--text2);
+  background:var(--border);
+}
+.estado-btn.btn-aceite { 
+  background:var(--success-light);
+  color:var(--success);
+  border-color:var(--success);
+}
+.estado-btn.btn-aceite:hover {
+  background:var(--success);
+  color:white;
+}
+.estado-btn.btn-nao-aceite { 
+  background:var(--danger-light);
+  color:var(--danger);
+  border-color:var(--danger);
+}
+.estado-btn.btn-nao-aceite:hover {
+  background:var(--danger);
+  color:white;
+}
+.estado-btn.btn-validar { 
+  background:var(--warning-light);
+  color:var(--warning);
+  border-color:var(--warning);
+}
+.estado-btn.btn-validar:hover {
+  background:var(--warning);
+  color:white;
+}
+
+.csv-upload-box {
+  display:flex;
+  gap:1rem;
+  align-items:flex-end;
+  flex-wrap:wrap;
+}
+
+.csv-input-wrapper {
+  flex:1;
+  min-width:250px;
+}
+
+.file-input-label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:12px 16px;
+  border:2px solid var(--border);
+  border-radius:9px;
+  cursor:pointer;
+  background:var(--bg2);
+  color:var(--text);
+  font-weight:600;
+  transition:all 0.2s;
+}
+
+.file-input-label:hover {
+  border-color:var(--accent);
+  background:var(--accent-dim);
+}
+
+input[type="file"] {
+  display:none;
+}
+
+@media (max-width:768px) {
+  .evento-card-header {
+    flex-direction:column;
+  }
+  .evento-actions {
+    width:100%;
+  }
+  .csv-upload-box {
+    flex-direction:column;
+  }
+  .csv-input-wrapper {
+    width:100%;
+  }
+  .filter-tabs {
+    gap:0.3rem;
+  }
+  .filter-tab {
+    padding:6px 12px;
+    font-size:12px;
+  }
+}
 </style>
 {% endblock %}
 {% block content %}
 
-<div class="row" style="margin-bottom:1rem">
-  <h1 style="font-size:20px;font-weight:700">Eventos</h1>
+<div class="row" style="margin-bottom:1.5rem">
+  <h1 style="margin:0">🎵 Eventos</h1>
   <div class="spacer"></div>
   {% if current_role == 'admin' %}
-  <a href="{{ url_for('novo_evento') }}" class="btn btn-sm">+ Manual</a>
+  <a href="{{ url_for('novo_evento') }}" class="btn"><span style="font-size:16px;margin-right:4px">+</span>Novo Evento</a>
   {% endif %}
 </div>
 
 <!-- Importar CSV - ADMIN ONLY -->
 {% if current_role == 'admin' %}
-<div class="card" style="margin-bottom:1rem">
-  <div class="card-title">📥 Criar evento a partir do CSV</div>
-  <p class="muted" style="margin-bottom:.75rem">Corre o script no WhatsApp Web → descarrega o CSV → faz upload aqui.</p>
+<div class="card">
+  <div class="card-title">📥 Importar Evento do WhatsApp</div>
+  <p class="muted" style="margin-bottom:1rem">
+    Executa o <strong>script no WhatsApp Web</strong> → descarrega o <strong>CSV</strong> → faz upload aqui.
+  </p>
   <form method="post" action="{{ url_for('importar_csv_novo') }}" enctype="multipart/form-data">
-    <div class="row">
-      <input type="file" name="csv_file" accept=".csv" style="flex:1;border:1px solid var(--border2);border-radius:var(--radius);padding:8px;font-size:14px;background:var(--card);color:var(--text)">
-      <button class="btn btn-primary" type="submit">Importar e criar</button>
+    <div class="csv-upload-box">
+      <div class="csv-input-wrapper">
+        <label class="file-input-label" for="csv_file">
+          <span>📁</span>
+          <span id="file-name">Selecciona o CSV...</span>
+        </label>
+        <input 
+          type="file" 
+          id="csv_file"
+          name="csv_file" 
+          accept=".csv"
+          onchange="document.getElementById('file-name').textContent = this.files[0]?.name || 'Selecciona o CSV...'"
+        >
+      </div>
+      <button type="submit" class="btn" style="padding:11px 24px;font-weight:700">
+        <span style="font-size:16px;margin-right:4px">⬆️</span>Importar e Criar
+      </button>
     </div>
   </form>
 </div>
@@ -68,15 +237,17 @@
 
 <!-- Filtros -->
 <div class="filter-tabs">
-  <button class="filter-tab active" data-filtro="todos" onclick="filtrar(this)">Todos ({{ eventos | length }})</button>
+  <button class="filter-tab active" data-filtro="todos" onclick="filtrar(this)">
+    🎭 Todos <strong>({{ eventos | length }})</strong>
+  </button>
   <button class="filter-tab" data-filtro="por-validar" onclick="filtrar(this)">
-    Por validar ({{ eventos | selectattr('estado', 'equalto', 'por-validar') | list | length }})
+    ⏳ Por validar <strong>({{ eventos | selectattr('estado', 'equalto', 'por-validar') | list | length }})</strong>
   </button>
   <button class="filter-tab" data-filtro="aceite" onclick="filtrar(this)">
-    ✓ Aceites ({{ eventos | selectattr('estado', 'equalto', 'aceite') | list | length }})
+    ✓ Aceites <strong>({{ eventos | selectattr('estado', 'equalto', 'aceite') | list | length }})</strong>
   </button>
   <button class="filter-tab" data-filtro="nao-aceite" onclick="filtrar(this)">
-    ✗ Não aceites ({{ eventos | selectattr('estado', 'equalto', 'nao-aceite') | list | length }})
+    ✗ Não aceites <strong>({{ eventos | selectattr('estado', 'equalto', 'nao-aceite') | list | length }})</strong>
   </button>
 </div>
 
@@ -85,13 +256,13 @@
 {% set prox_class = ev.nome | proximidade_class %}
 {% set prox_label = ev.nome | proximidade_label %}
 <div class="card evento-card" data-estado="{{ ev.estado or 'por-validar' }}"
-     style="padding:1rem{% if ev.estado == 'aceite' %};border-left:3px solid var(--green-border){% elif ev.estado == 'nao-aceite' %};border-left:3px solid var(--red-border);opacity:.7{% elif prox_class == 'data-semana' %};border-left:3px solid var(--amber-border){% endif %}">
-  <div class="row" style="flex-wrap:nowrap">
+     style="border-left:5px solid {% if ev.estado == 'aceite' %}var(--success){% elif ev.estado == 'nao-aceite' %}var(--danger){% elif prox_class == 'data-semana' %}var(--warning){% else %}var(--border){% endif %}{% if ev.estado == 'nao-aceite' %};opacity:0.7{% endif %}">
+  <div class="evento-card-header">
     <div style="flex:1;min-width:0">
-      <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+      <div class="evento-card-title">
         {{ ev.nome }}
       </div>
-      <div style="display:flex;align-items:center;gap:.5rem;margin-top:3px;flex-wrap:wrap">
+      <div class="evento-card-meta">
         <span class="estado-badge estado-{{ ev.estado or 'por-validar' }}">
           {% if ev.estado == 'aceite' %}✓ Aceite
           {% elif ev.estado == 'nao-aceite' %}✗ Não aceite
@@ -103,32 +274,41 @@
         {% endif %}
       </div>
     </div>
-    {% if current_role == 'admin' %}
-    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Editar</a>
-    {% else %}
-    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Ver</a>
-    {% endif %}
-    <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>
-    {% if current_role == 'admin' %}
-    <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Apagar este evento?')">
-      <button class="btn btn-sm btn-danger">✕</button>
-    </form>
-    {% endif %}
+    <div class="evento-actions">
+      {% if current_role == 'admin' %}
+      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm btn-secondary">✏️ Editar</a>
+      {% else %}
+      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm btn-secondary">👁️ Ver</a>
+      {% endif %}
+      <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">📋 Tabela</a>
+      {% if current_role == 'admin' %}
+      <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Tens a certeza que queres apagar este evento?')" style="display:inline">
+        <button class="btn btn-sm btn-danger">🗑️</button>
+      </form>
+      {% endif %}
+    </div>
   </div>
+  
   <!-- Botões de estado - ADMIN ONLY -->
   {% if current_role == 'admin' %}
   <div class="estado-btns">
     <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
       <input type="hidden" name="estado" value="aceite">
-      <button class="estado-btn {% if ev.estado == 'aceite' %}btn-aceite{% endif %}">✓ Aceite</button>
+      <button class="estado-btn {% if ev.estado == 'aceite' %}btn-aceite{% endif %}" type="submit">
+        ✓ Marcar como Aceite
+      </button>
     </form>
     <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
       <input type="hidden" name="estado" value="nao-aceite">
-      <button class="estado-btn {% if ev.estado == 'nao-aceite' %}btn-nao-aceite{% endif %}">✗ Não aceite</button>
+      <button class="estado-btn {% if ev.estado == 'nao-aceite' %}btn-nao-aceite{% endif %}" type="submit">
+        ✗ Marcar como Não Aceite
+      </button>
     </form>
     <form method="post" action="{{ url_for('set_estado_evento', eid=ev.id) }}" style="display:inline">
       <input type="hidden" name="estado" value="por-validar">
-      <button class="estado-btn {% if not ev.estado or ev.estado == 'por-validar' %}btn-validar{% endif %}">⏳ Por validar</button>
+      <button class="estado-btn {% if not ev.estado or ev.estado == 'por-validar' %}btn-validar{% endif %}" type="submit">
+        ⏳ Marcar como Por Validar
+      </button>
     </form>
   </div>
   {% endif %}
@@ -136,8 +316,9 @@
 {% endfor %}
 {% else %}
 <div class="card" style="text-align:center;padding:3rem;color:var(--text2)">
-  <div style="font-size:2rem;margin-bottom:.5rem">🎵</div>
-  Nenhum evento ainda.<br>Importa um CSV ou cria manualmente.
+  <div style="font-size:3rem;margin-bottom:1rem">🎵</div>
+  <p style="font-size:16px;font-weight:600;margin-bottom:0.5rem">Nenhum evento ainda</p>
+  <p style="font-size:14px">Importa um CSV ou cria um novo evento manualmente.</p>
 </div>
 {% endif %}
 

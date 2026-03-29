@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Tabela — {{ ev.nome }}{% endblock %}
+{% block head %}
+<style>
+.totais-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:.5rem;margin-bottom:1.25rem}
+.total-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:.75rem;text-align:center}
+.total-num{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
+.total-label{font-size:11px}
+
+.filter-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--card2);color:var(--text2);transition:.15s}
+.filter-btn:hover{border-color:var(--border2);color:var(--text)}
+.filter-btn.active{background:var(--accent);color:#0f0f11;border-color:var(--accent);font-weight:600}
+
+.membro-row{display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.65rem .875rem;border-bottom:1px solid var(--border)}
+.membro-row:last-child{border-bottom:none}
+
+.cat-header{padding:.35rem .875rem;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;background:var(--bg3);border-radius:6px;margin:.25rem 0}
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.25rem">
+  <div style="flex:1;min-width:0">
+    <h1 style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.2">{{ ev.nome }}</h1>
+    <span class="muted" style="font-size:11px">{{ ev.criado }}</span>
+  </div>
+  <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm">🎸</a>
+  <a href="{{ url_for('evento', eid=ev.id) }}"             class="btn btn-sm">✏️</a>
+</div>
+
+<!-- Totais -->
+<div class="totais-grid">
+  {% for op, total in totais.items() %}
+  {% set slug = op|lower|replace(' ','')|replace('ã','a')|replace('é','e')|replace('á','a') %}
+  <div class="total-card">
+    <div class="total-num">{{ total }}</div>
+    <div><span class="badge badge-{{ slug }}">{{ op }}</span></div>
+  </div>
+  {% endfor %}
+  <div class="total-card">
+    <div class="total-num" style="color:var(--text3)">{{ sem_resp }}</div>
+    <div class="muted" style="font-size:11px;margin-top:2px">sem resp.</div>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="filter-bar">
+  <button class="filter-btn active" data-filtro="__todos__"       onclick="filtrar(this)">Todos</button>
+  {% for op in opcoes %}
+  <button class="filter-btn"        data-filtro="{{ op }}"        onclick="filtrar(this)">{{ op }}</button>
+  {% endfor %}
+  <button class="filter-btn"        data-filtro="__sem_resposta__" onclick="filtrar(this)">Sem resposta</button>
+</div>
+
+<!-- Xeques -->
+{% if xeques %}
+<div class="section-label">Xeques</div>
+<div class="card card-sm" style="margin-bottom:1rem">
+  {% for elem in xeques %}
+  {% set resps = resp_map.get(elem.id, []) %}
+  <div class="membro-row" data-opcoes="{{ resps|join('|||') }}" data-sem="{{ 'true' if not resps else 'false' }}">
+    <span style="flex:1;font-weight:500;font-size:14px">{{ elem.nome }}</span>
+    <div style="display:flex;flex-wrap:wrap;gap:3px">
+      {% if resps %}
+        {% for op in opcoes %}{% if op in resps %}
+        {% set slug = op|lower|replace(' ','')|replace('ã','a')|replace('é','e')|replace('á','a') %}
+        <span class="badge badge-{{ slug }}">{{ op }}</span>
+        {% endif %}{% endfor %}
+      {% else %}<span class="badge badge-none">—</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Camelos + Ali-Bobós -->
+{% if membros %}
+<div class="section-label">Camelos & Ali-Bobós</div>
+<div class="card card-sm">
+  {% for cat in ["Camelo", "Ali-Bobó"] %}
+  {% set membros_cat = membros|selectattr('categoria','equalto',cat)|list %}
+  {% if membros_cat %}
+  <div class="cat-header">{{ cat }}s</div>
+  {% for elem in membros_cat %}
+  {% set resps = resp_map.get(elem.id, []) %}
+  <div class="membro-row" data-opcoes="{{ resps|join('|||') }}" data-sem="{{ 'true' if not resps else 'false' }}">
+    <span style="flex:1;font-weight:500;font-size:14px">{{ elem.nome }}</span>
+    <div style="display:flex;flex-wrap:wrap;gap:3px">
+      {% if resps %}
+        {% for op in opcoes %}{% if op in resps %}
+        {% set slug = op|lower|replace(' ','')|replace('ã','a')|replace('é','e')|replace('á','a') %}
+        <span class="badge badge-{{ slug }}">{{ op }}</span>
+        {% endif %}{% endfor %}
+      {% else %}<span class="badge badge-none">—</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<script>
+function filtrar(btn){
+  var opcao=btn.dataset.filtro;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  document.querySelectorAll('.membro-row').forEach(function(row){
+    var mostrar;
+    if(opcao==='__todos__'){mostrar=true}
+    else if(opcao==='__sem_resposta__'){mostrar=row.dataset.sem==='true'}
+    else{var ops=row.dataset.opcoes.split('|||').map(function(s){return s.trim()}).filter(Boolean);mostrar=ops.indexOf(opcao.trim())!==-1}
+    row.style.display=mostrar?'flex':'none';
+  });
+  document.querySelectorAll('.cat-header').forEach(function(h){
+    var next=h.nextElementSibling,vis=false;
+    while(next&&!next.classList.contains('cat-header')){
+      if(next.classList.contains('membro-row')&&next.style.display!=='none'){vis=true;break}
+      next=next.nextElementSibling;
+    }
+    h.style.display=vis?'':'none';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Entrar — Tuna{% endblock %}
+{% block content %}
+<div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:2rem 0">
+  <div style="width:100%;max-width:360px">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:48px;margin-bottom:.75rem">🎵</div>
+      <h1 style="font-family:'DM Serif Display',serif;font-size:32px;letter-spacing:-.5px;margin-bottom:.25rem">Tuna</h1>
+      <p class="muted">Sistema de gestão de disponibilidades</p>
+    </div>
+    <div class="card">
+      <form method="post">
+        <label>Password</label>
+        <input type="password" name="password" autofocus style="margin-bottom:1.25rem">
+        <button class="btn btn-primary btn-full">Entrar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

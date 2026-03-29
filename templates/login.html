@@ -1,25 +1,105 @@
 {% extends "base.html" %}
 {% block title %}Login — Desertuna{% endblock %}
+{% block head %}
+<style>
+.login-container {
+  max-width: 420px;
+  margin: 3rem auto;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-card {
+  padding: 2.5rem;
+  text-align: center;
+  border: 2px solid var(--accent);
+  background: var(--accent-dim);
+  border-radius: 14px;
+}
+
+.login-card img {
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.1));
+}
+
+.login-subtitle {
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.login-form label {
+  text-align: left;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.login-form input {
+  margin-bottom: 1.5rem;
+  padding: 12px 14px;
+  font-weight: 500;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  font-size: 12px;
+  color: var(--text2);
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+
+.login-footer p {
+  margin: 0.5rem 0;
+  font-weight: 500;
+}
+</style>
+{% endblock %}
 {% block content %}
-<div style="max-width:420px;margin:2.5rem auto">
-  <div class="card" style="padding:2.5rem;text-align:center;border:3px solid #d4a574;background:linear-gradient(135deg, rgba(212,165,116,0.05), rgba(139,105,20,0.05))">
+<div class="login-container">
+  <div class="card login-card">
     <!-- Official Desertuna Logo -->
-    <img src="{{ url_for('static', filename='images/desertuna-brasao.png') }}" alt="Desertuna Logo" style="height:80px;width:80px;margin-bottom:1.5rem;display:block;margin-left:auto;margin-right:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1))">
+    <img src="{{ url_for('static', filename='images/desertuna-brasao.png') }}" alt="Desertuna Logo" 
+         style="height:90px; width:90px; margin-bottom:1.5rem; display:block; margin-left:auto; margin-right:auto; border-radius:8px; background:var(--accent-light); padding:4px;">
     
     <!-- Desertuna Text Logo -->
-    <img src="{{ url_for('static', filename='images/desertuna-letras.png') }}" alt="Desertuna" style="height:50px;margin-bottom:0.5rem;display:block;margin-left:auto;margin-right:auto">
+    <img src="{{ url_for('static', filename='images/desertuna-letras.png') }}" alt="Desertuna" 
+         style="height:55px; margin-bottom:1rem; display:block; margin-left:auto; margin-right:auto;">
     
-    <p style="color:#8b6914;font-size:14px;font-weight:600;margin-bottom:1.75rem;letter-spacing:1px">Disponibilidades & Presenças</p>
+    <p class="login-subtitle">📋 Disponibilidades & Presenças</p>
     
-    <form method="post">
-      <label style="font-weight:600;color:#5d5d5d">Password</label>
-      <input type="password" name="password" placeholder="Insere a password" autofocus style="margin-bottom:1.5rem;padding:12px;border:2px solid #e0dfd8">
-      <button class="btn btn-primary" style="width:100%;padding:12px;font-size:16px;font-weight:600;background:linear-gradient(135deg, #d4a574, #8b6914);border:none">🎸 Entrar</button>
+    <form method="post" class="login-form">
+      <label for="password">🔐 Password</label>
+      <input 
+        type="password" 
+        id="password"
+        name="password" 
+        placeholder="Insere a password" 
+        autofocus
+        required
+        autocomplete="current-password"
+      >
+      <button type="submit" class="btn btn-primary login-btn">
+        <span style="font-size:18px; margin-right:6px;">🎸</span>Entrar
+      </button>
     </form>
     
-    <div style="margin-top:1.5rem;font-size:12px;color:#9a9890;border-top:1px solid #e0dfd8;padding-top:1rem">
-      <p style="margin:0">🔐 Login seguro com password</p>
-      <p style="margin:5px 0 0 0;font-size:11px">Desertuna - Banda de Tunas</p>
+    <div class="login-footer">
+      <p style="font-size:13px; font-weight:600">🔒 Login seguro com password</p>
+      <p style="font-size:11px; color:var(--text3)">Organizador Desertuna — Banda de Tunas</p>
     </div>
   </div>
 </div>

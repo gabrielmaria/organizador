@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Ensaios — Tuna{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.5rem">
+  <h1 class="page-title" style="margin-bottom:0">Ensaios</h1>
+</div>
+
+<div class="card" style="margin-bottom:1.25rem">
+  <div class="card-title">Novo ensaio</div>
+  <form method="post" action="{{ url_for('novo_ensaio') }}">
+    <label>Data</label>
+    <div class="row" style="margin-top:.3rem">
+      <input type="date" name="data" style="flex:1">
+      <button class="btn btn-primary" type="submit">Criar</button>
+    </div>
+  </form>
+</div>
+
+{% if ensaios %}
+{% for ens in ensaios %}
+<div class="card" style="padding:.875rem 1rem">
+  <div class="row">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:15px">{{ ens.data|format_date }}</div>
+      <div class="muted" style="font-size:11px;margin-top:2px">criado {{ ens.criado }}</div>
+    </div>
+    <a href="{{ url_for('ensaio_detail', eid=ens.id) }}" class="btn btn-sm btn-primary">Abrir</a>
+    <form method="post" action="{{ url_for('del_ensaio', eid=ens.id) }}"
+          onsubmit="return confirm('Apagar este ensaio?')">
+      <button class="btn btn-sm btn-danger">✕</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div style="text-align:center;padding:4rem 1rem;color:var(--text3)">
+  <div style="font-size:3rem;margin-bottom:.75rem;opacity:.4">🎼</div>
+  <div>Nenhum ensaio registado ainda.</div>
+</div>
+{% endif %}
+
+{% endblock %}

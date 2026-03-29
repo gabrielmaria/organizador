@@ -1,35 +1,117 @@
 {% extends "base.html" %}
 {% block title %}Ensaios — Desertuna{% endblock %}
+{% block head %}
+<style>
+.ensaio-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 1.25rem;
+  border-left: 4px solid var(--blue);
+}
+
+.ensaio-info {
+  flex: 1;
+  min-width: 150px;
+}
+
+.ensaio-date {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.ensaio-created {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 0.3rem;
+}
+
+.ensaio-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.novo-ensaio-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.novo-ensaio-form > div {
+  flex: 1;
+  min-width: 150px;
+}
+
+@media (max-width: 768px) {
+  .ensaio-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .ensaio-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .novo-ensaio-form {
+    flex-direction: column;
+  }
+  
+  .novo-ensaio-form > div {
+    width: 100%;
+  }
+  
+  .novo-ensaio-form .btn {
+    width: 100%;
+  }
+}
+</style>
+{% endblock %}
 {% block content %}
 
-<div class="row" style="margin-bottom:1.25rem">
-  <h1 style="font-size:20px;font-weight:700">Ensaios</h1>
+<div class="row" style="margin-bottom:1.5rem">
+  <h1 style="margin: 0;">✓ Ensaios</h1>
+  <div class="spacer"></div>
 </div>
 
 <!-- Novo ensaio - ADMIN ONLY -->
 {% if current_role == 'admin' %}
 <div class="card">
-  <div class="card-title">📅 Novo ensaio</div>
-  <form method="post" action="{{ url_for('novo_ensaio') }}">
-    <label>Data</label>
-    <input type="date" name="data" style="margin-bottom:.75rem">
-    <button class="btn btn-primary" type="submit">Criar ensaio</button>
+  <div class="card-title">📅 Marcar Novo Ensaio</div>
+  <form method="post" action="{{ url_for('novo_ensaio') }}" class="novo-ensaio-form">
+    <div>
+      <label for="data">Data do ensaio</label>
+      <input type="date" id="data" name="data" required>
+    </div>
+    <button class="btn btn-primary" type="submit" style="align-self: flex-end;">
+      <span style="font-size: 16px; margin-right: 4px;">+</span>Criar Ensaio
+    </button>
   </form>
 </div>
 {% endif %}
 
+<!-- Lista de ensaios -->
 {% if ensaios %}
 {% for ens in ensaios %}
-<div class="card" style="padding:1rem">
-  <div class="row">
-    <div style="flex:1;min-width:0">
-      <div style="font-weight:600;font-size:15px">{{ ens.data | format_date }}</div>
-      <div class="muted">criado {{ ens.criado }}</div>
-    </div>
-    <a href="{{ url_for('ensaio_detail', eid=ens.id) }}" class="btn btn-sm btn-primary">Abrir</a>
+<div class="card ensaio-card">
+  <div class="ensaio-info">
+    <div class="ensaio-date">📅 {{ ens.data | format_date }}</div>
+    <div class="ensaio-created">Criado em {{ ens.criado }}</div>
+  </div>
+  <div class="ensaio-actions">
+    <a href="{{ url_for('ensaio_detail', eid=ens.id) }}" class="btn btn-primary btn-sm">
+      <span style="font-size: 16px; margin-right: 4px;">👁️</span>Abrir
+    </a>
     {% if current_role == 'admin' %}
-    <form method="post" action="{{ url_for('del_ensaio', eid=ens.id) }}" onsubmit="return confirm('Apagar este ensaio e todas as presenças?')">
-      <button class="btn btn-sm btn-danger">✕</button>
+    <form method="post" action="{{ url_for('del_ensaio', eid=ens.id) }}" onsubmit="return confirm('Tens a certeza que queres apagar este ensaio e todas as presenças registadas?')" style="display: inline;">
+      <button class="btn btn-danger btn-sm" type="submit">
+        <span style="font-size: 16px;">🗑️</span>
+      </button>
     </form>
     {% endif %}
   </div>
@@ -37,8 +119,9 @@
 {% endfor %}
 {% else %}
 <div class="card" style="text-align:center;padding:3rem;color:var(--text2)">
-  <div style="font-size:2rem;margin-bottom:.5rem">🎼</div>
-  Nenhum ensaio registado ainda.
+  <div style="font-size:3rem;margin-bottom:1rem">🎼</div>
+  <p style="font-size:16px;font-weight:600;margin-bottom:0.5rem">Nenhum ensaio registado</p>
+  <p style="font-size:14px">Cria um novo ensaio para começar a registar presenças.</p>
 </div>
 {% endif %}
 

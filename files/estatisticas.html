@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Estatísticas — Tuna{% endblock %}
+{% block head %}
+<style>
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:.875rem 1rem;margin-bottom:.5rem;
+  display:flex;align-items:center;gap:.875rem;
+  text-decoration:none;color:inherit;transition:.15s;
+}
+.stat-card:hover{border-color:var(--border2);background:var(--card2)}
+
+.avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--accent-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Serif Display',serif;font-size:17px;flex-shrink:0;
+  border:1px solid var(--accent-border);
+}
+
+.bar-row{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:5px}
+.bar-label{width:56px;color:var(--text3);flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-green{background:var(--green)}
+.bar-amber{background:var(--amber)}
+.bar-pct{width:30px;font-weight:600;color:var(--text2);text-align:right;flex-shrink:0}
+
+.filter-tabs{display:flex;gap:.4rem;margin-bottom:.875rem;flex-wrap:wrap}
+.filter-tab{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--card2);color:var(--text2);transition:.15s}
+.filter-tab.active{background:var(--accent);color:#0f0f11;border-color:var(--accent);font-weight:600}
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="row" style="margin-bottom:1.5rem">
+  <h1 class="page-title" style="margin-bottom:0">Estatísticas</h1>
+  <div class="spacer"></div>
+  <span class="muted" style="font-size:12px">{{ total_ensaios }} ensaios</span>
+</div>
+
+<div class="filter-tabs">
+  <button class="filter-tab active" onclick="filtrar(this,'todos')">Todos</button>
+  {% for cat in hierarquia %}
+  <button class="filter-tab" onclick="filtrar(this,'{{ cat }}')">{{ cat }}s</button>
+  {% endfor %}
+</div>
+
+<div style="margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem">
+  <span class="muted" style="font-size:12px">Ordenar por</span>
+  <select onchange="ordenar(this.value)"
+          style="width:auto;padding:4px 10px;font-size:12px;border-radius:8px">
+    <option value="nome">Nome</option>
+    <option value="presenca">% Presença</option>
+    <option value="atraso">% Atraso</option>
+  </select>
+</div>
+
+<div id="lista">
+{% for s in stats %}
+<a class="stat-card"
+   href="{{ url_for('estatisticas_membro', elem_id=s.elem.id) }}"
+   data-cat="{{ s.elem.categoria }}"
+   data-nome="{{ s.elem.nome }}"
+   data-presenca="{{ s.pct_presenca }}"
+   data-atraso="{{ s.pct_atraso }}">
+  <div class="avatar">{{ s.elem.nome[0]|upper }}</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-weight:600;font-size:14px">{{ s.elem.nome }}</div>
+    <div style="font-size:11px;color:var(--text3)">{{ s.elem.categoria }}{% if s.elem.instrumento %} · {{ s.elem.instrumento }}{% endif %}</div>
+    <div class="bar-row">
+      <span class="bar-label">Presença</span>
+      <div class="bar-track"><div class="bar-fill bar-green" style="width:{{ s.pct_presenca }}%"></div></div>
+      <span class="bar-pct">{{ s.pct_presenca }}%</span>
+    </div>
+    {% if s.n_atrasado > 0 %}
+    <div class="bar-row">
+      <span class="bar-label">Atrasos</span>
+      <div class="bar-track"><div class="bar-fill bar-amber" style="width:{{ s.pct_atraso }}%"></div></div>
+      <span class="bar-pct">{{ s.pct_atraso }}%</span>
+    </div>
+    {% endif %}
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-family:'DM Serif Display',serif;font-size:26px;line-height:1;color:{% if s.pct_presenca>=75 %}var(--green){% elif s.pct_presenca>=50 %}var(--amber){% else %}var(--red){% endif %}">{{ s.pct_presenca }}%</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:2px">{{ s.n_presente }}/{{ s.total_ensaios }}</div>
+  </div>
+</a>
+{% else %}
+<div style="text-align:center;padding:3rem;color:var(--text3)">Nenhum dado ainda.</div>
+{% endfor %}
+</div>
+
+<script>
+function filtrar(btn,cat){
+  document.querySelectorAll('.filter-tab').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  document.querySelectorAll('#lista .stat-card').forEach(function(c){
+    c.style.display=(cat==='todos'||c.dataset.cat===cat)?'':'none';
+  });
+}
+function ordenar(by){
+  var lista=document.getElementById('lista');
+  var cards=[].slice.call(lista.querySelectorAll('.stat-card'));
+  cards.sort(function(a,b){
+    if(by==='nome')return a.dataset.nome.localeCompare(b.dataset.nome,'pt');
+    if(by==='presenca')return+b.dataset.presenca-+a.dataset.presenca;
+    if(by==='atraso')return+b.dataset.atraso-+a.dataset.atraso;
+    return 0;
+  });
+  cards.forEach(function(c){lista.appendChild(c)});
+}
+</script>
+{% endblock %}

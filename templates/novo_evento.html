@@ -1,17 +1,91 @@
 {% extends "base.html" %}
 {% block title %}Novo Evento — Desertuna{% endblock %}
+{% block head %}
+<style>
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: var(--accent-dim);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.form-actions .btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+@media (max-width: 600px) {
+  .form-actions .btn {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+}
+</style>
+{% endblock %}
 {% block content %}
-<h1 style="font-size:20px;font-weight:700;margin-bottom:1rem">Novo evento</h1>
+
+<div class="row" style="margin-bottom:1.5rem">
+  <h1 style="margin: 0;">🎉 Novo Evento</h1>
+  <div class="spacer"></div>
+</div>
+
 <div class="card">
-  <form method="post">
-    <label>Nome do evento</label>
-    <input type="text" name="nome" placeholder="Ex: 14/JUN - Festas de Santo António" style="margin-bottom:1rem">
-    <p class="muted" style="margin-bottom:1rem;font-size:12px">💡 Inclui a data no nome (ex: <strong>27/MAR</strong>) para ordenação automática na lista.</p>
-    <label>Opções de resposta (uma por linha)</label>
-    <textarea name="opcoes" placeholder="Sim&#10;Não&#10;Levo Carro" style="margin-bottom:1rem"></textarea>
-    <div style="display:flex;gap:.5rem">
-      <button class="btn btn-primary">Criar evento</button>
-      <a href="{{ url_for('index') }}" class="btn">Cancelar</a>
+  <form method="post" class="form-section">
+    <div class="form-group">
+      <label for="nome">📋 Nome do Evento</label>
+      <input 
+        type="text" 
+        id="nome"
+        name="nome" 
+        placeholder="Ex: 14/JUN - Festas de Santo António"
+        required
+      >
+      <div class="form-hint">
+        💡 <strong>Dica:</strong> Inclui a data no nome (ex: <strong>27/MAR</strong>) para ordenação automática.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="opcoes">✅ Opções de Resposta</label>
+      <textarea 
+        id="opcoes"
+        name="opcoes" 
+        placeholder="Sim&#10;Não&#10;Levo Carro&#10;Talvez"
+        required
+      ></textarea>
+      <div class="form-hint">
+        💡 <strong>Dica:</strong> Uma opção por linha. Os membros vão poder seleccionar uma destas opções.
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn">
+        <span style="font-size:18px;margin-right:6px;">✨</span>Criar Evento
+      </button>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">
+        <span style="font-size:16px;margin-right:6px;">✕</span>Cancelar
+      </a>
     </div>
   </form>
 </div>

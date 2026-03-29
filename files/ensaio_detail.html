@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block head %}
+<style>
+.stat-strip{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.stat-chip{
+  flex:1;min-width:80px;
+  padding:.625rem .875rem;
+  border-radius:var(--r);
+  border:1px solid var(--border);
+  background:var(--card2);
+  text-align:center;
+}
+.stat-chip-num{font-size:22px;font-weight:700;line-height:1;margin-bottom:2px}
+.stat-chip-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+
+.membro-card{
+  background:var(--card2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:.875rem 1rem;
+  margin-bottom:.5rem;
+  transition:.2s;
+}
+.membro-card.estado-a-horas  {border-color:var(--green-border);background:var(--green-bg)}
+.membro-card.estado-atrasado {border-color:var(--amber-border);background:var(--amber-bg)}
+.membro-card.estado-nao-veio {border-color:var(--red-border);background:var(--red-bg);opacity:.65}
+
+.membro-nome{font-weight:600;font-size:14px}
+
+.estado-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:.5rem}
+.estado-btn{
+  padding:5px 14px;border-radius:16px;font-size:13px;font-weight:500;
+  border:1px solid var(--border2);background:transparent;color:var(--text2);
+  cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent;
+}
+.estado-btn.active-a-horas  {background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.estado-btn.active-atrasado {background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.estado-btn.active-nao-veio {background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+
+.saved-toast{
+  position:fixed;bottom:calc(var(--bot-h) + .75rem);right:1rem;
+  background:var(--card2);color:var(--text);border:1px solid var(--border2);
+  padding:7px 14px;border-radius:20px;font-size:12px;font-weight:500;
+  opacity:0;transition:opacity .3s;z-index:300;pointer-events:none;
+}
+.saved-toast.show{opacity:1}
+@media(min-width:641px){
+  .saved-toast{bottom:1rem}
+}
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="saved-toast" id="saved-toast">✓ Guardado</div>
+
+<div class="row" style="margin-bottom:1.25rem">
+  <div style="flex:1;min-width:0">
+    <h1 style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.2">{{ titulo }}</h1>
+    <span class="muted" style="font-size:11px">{{ ensaio.criado }}</span>
+  </div>
+  <a href="{{ url_for('ensaios') }}" class="btn btn-sm">← Voltar</a>
+</div>
+
+<!-- Contadores -->
+<div class="stat-strip">
+  <div class="stat-chip">
+    <div class="stat-chip-num" style="color:var(--green)" id="cnt-ahoras">{{ totais['a-horas'] }}</div>
+    <div class="stat-chip-label">A horas</div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-chip-num" style="color:var(--amber)" id="cnt-atrasado">{{ totais['atrasado'] }}</div>
+    <div class="stat-chip-label">Atrasados</div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-chip-num" style="color:var(--red)" id="cnt-naoveio">{{ totais['nao-veio'] }}</div>
+    <div class="stat-chip-label">Faltaram</div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-chip-num" style="color:var(--text3)" id="cnt-semregisto">{{ totais['sem-registo'] }}</div>
+    <div class="stat-chip-label">Sem registo</div>
+  </div>
+</div>
+
+{% for cat in hierarquia %}
+{% set membros_cat = elementos|selectattr('categoria','equalto',cat)|list %}
+{% if membros_cat %}
+<div class="section-label" style="margin-top:.75rem">{{ cat }}s</div>
+{% for elem in membros_cat %}
+{% set presc = presc_map.get(elem.id, {}) %}
+{% set estado_atual = presc.get('estado','sem-registo') if presc else 'sem-registo' %}
+<div class="membro-card estado-{{ estado_atual }}" id="card-{{ elem.id }}">
+  <div class="membro-nome">{{ elem.nome }}</div>
+  <div class="estado-btns">
+    <button class="estado-btn {% if estado_atual=='a-horas'  %}active-a-horas{% endif %}"
+            onclick="setEstado(this,'a-horas',{{ elem.id }})">✓ A horas</button>
+    <button class="estado-btn {% if estado_atual=='atrasado' %}active-atrasado{% endif %}"
+            onclick="setEstado(this,'atrasado',{{ elem.id }})">⏱ Atrasado</button>
+    <button class="estado-btn {% if estado_atual=='nao-veio' %}active-nao-veio{% endif %}"
+            onclick="setEstado(this,'nao-veio',{{ elem.id }})">✗ Não veio</button>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+<script>
+const ENSAIO_ID = {{ ensaio.id }};
+function setEstado(btn,novoEstado,elemId){
+  var card=document.getElementById('card-'+elemId);
+  var btns=card.querySelectorAll('.estado-btn');
+  var jaAtivo=btn.classList.contains('active-'+novoEstado);
+  btns.forEach(function(b){b.className='estado-btn'});
+  card.className='membro-card';
+  var estado=jaAtivo?'sem-registo':novoEstado;
+  if(!jaAtivo){btn.classList.add('active-'+novoEstado);card.classList.add('estado-'+novoEstado)}
+  atualizarContadores();guardar(elemId,estado);
+}
+function atualizarContadores(){
+  var c={'a-horas':0,'atrasado':0,'nao-veio':0,'sem-registo':0};
+  document.querySelectorAll('.membro-card').forEach(function(card){
+    var cls=[].slice.call(card.classList).find(function(x){return x.startsWith('estado-')});
+    if(cls){var k=cls.replace('estado-','');c[k]=(c[k]||0)+1;}
+  });
+  document.getElementById('cnt-ahoras').textContent=c['a-horas'];
+  document.getElementById('cnt-atrasado').textContent=c['atrasado'];
+  document.getElementById('cnt-naoveio').textContent=c['nao-veio'];
+  document.getElementById('cnt-semregisto').textContent=c['sem-registo'];
+}
+function guardar(elemId,estado){
+  var fd=new FormData();
+  fd.append('elemento_id',elemId);fd.append('estado',estado);
+  fd.append('hora','');fd.append('nota','');
+  fetch('/ensaios/'+ENSAIO_ID+'/presenca',{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+  .then(function(){mostrarToast()});
+}
+function mostrarToast(){
+  var el=document.getElementById('saved-toast');
+  el.classList.add('show');clearTimeout(window._t);
+  window._t=setTimeout(function(){el.classList.remove('show')},1400);
+}
+</script>
+{% endblock %}
