@@ -387,19 +387,19 @@ function toggleTheme() {
     <img src="{{ url_for('static', filename='images/desertuna-brasao.png') }}" alt="Desertuna" style="height:36px;width:36px;border-radius:8px;background:var(--accent-light);padding:3px;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
     <span class="brand">DESERTUNA</span>
   </a>
-  <a href="{{ url_for('index') }}" class="nav-link">🎵 Eventos</a>
-  <a href="{{ url_for('ensaios') }}" class="nav-link">✓ Ensaios</a>
+  <a href="{{ url_for('index') }}" class="nav-link">Eventos</a>
+  <a href="{{ url_for('ensaios') }}" class="nav-link">Ensaios</a>
   {% if current_role == 'admin' %}
-  <a href="{{ url_for('elementos') }}" class="nav-link">👥 Membros</a>
+  <a href="{{ url_for('elementos') }}" class="nav-link">Membros</a>
   {% endif %}
-  <a href="{{ url_for('estatisticas') }}" class="nav-link">📊 Stats</a>
+  <a href="{{ url_for('estatisticas') }}" class="nav-link">Stats</a>
   {% if current_role == 'admin' %}
-  <a href="{{ url_for('backup_pagina') }}" class="nav-link">💾 Backup</a>
+  <a href="{{ url_for('backup_pagina') }}" class="nav-link">Backup</a>
   {% endif %}
   <div class="spacer"></div>
-  <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">🌙</button>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">◐</button>
   <span class="muted" style="margin-right: 10px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">{{ current_role }}</span>
-  <a href="{{ url_for('logout') }}" class="nav-link">🚪 Sair</a>
+  <a href="{{ url_for('logout') }}" class="nav-link">Sair</a>
 </nav>
 {% endif %}
 <div class="container">

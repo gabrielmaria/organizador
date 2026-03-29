@@ -208,7 +208,7 @@ input[type="file"] {
 <!-- Importar CSV - ADMIN ONLY -->
 {% if current_role == 'admin' %}
 <div class="card">
-  <div class="card-title">📥 Importar Evento do WhatsApp</div>
+  <div class="card-title">Importar Evento do WhatsApp</div>
   <p class="muted" style="margin-bottom:1rem">
     Executa o <strong>script no WhatsApp Web</strong> → descarrega o <strong>CSV</strong> → faz upload aqui.
   </p>
@@ -228,7 +228,7 @@ input[type="file"] {
         >
       </div>
       <button type="submit" class="btn" style="padding:11px 24px;font-weight:700">
-        <span style="font-size:16px;margin-right:4px">⬆️</span>Importar e Criar
+        Importar e Criar
       </button>
     </div>
   </form>
@@ -264,9 +264,9 @@ input[type="file"] {
       </div>
       <div class="evento-card-meta">
         <span class="estado-badge estado-{{ ev.estado or 'por-validar' }}">
-          {% if ev.estado == 'aceite' %}✓ Aceite
-          {% elif ev.estado == 'nao-aceite' %}✗ Não aceite
-          {% else %}⏳ Por validar{% endif %}
+          {% if ev.estado == 'aceite' %}Aceite
+          {% elif ev.estado == 'nao-aceite' %}Não aceite
+          {% else %}Por validar{% endif %}
         </span>
         <span class="muted">{{ ev.criado }}</span>
         {% if prox_label %}
@@ -276,14 +276,14 @@ input[type="file"] {
     </div>
     <div class="evento-actions">
       {% if current_role == 'admin' %}
-      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm btn-secondary">✏️ Editar</a>
+      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm btn-secondary">Editar</a>
       {% else %}
-      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm btn-secondary">👁️ Ver</a>
+      <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm btn-secondary">Ver</a>
       {% endif %}
-      <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">📋 Tabela</a>
+      <a href="{{ url_for('tabela', eid=ev.id) }}" class="btn btn-sm btn-primary">Tabela</a>
       {% if current_role == 'admin' %}
       <form method="post" action="{{ url_for('del_evento', eid=ev.id) }}" onsubmit="return confirm('Tens a certeza que queres apagar este evento?')" style="display:inline">
-        <button class="btn btn-sm btn-danger">🗑️</button>
+        <button class="btn btn-sm btn-danger">Apagar</button>
       </form>
       {% endif %}
     </div>

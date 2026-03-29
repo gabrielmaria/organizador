@@ -226,13 +226,13 @@
 
 <div class="tabela-header">
   <div class="tabela-title">
-    <h1>📋 {{ ev.nome }}</h1>
+    <h1>{{ ev.nome }}</h1>
     <span class="muted">Criado em {{ ev.criado }}</span>
   </div>
   <div class="tabela-actions">
-    <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm btn-secondary">🎸 Instrumentos</a>
-    <a href="{{ url_for('evento_transportes', eid=ev.id) }}" class="btn btn-sm btn-secondary">🚗 Transportes</a>
-    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">✏️ Editar</a>
+    <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm btn-secondary">Instrumentos</a>
+    <a href="{{ url_for('evento_transportes', eid=ev.id) }}" class="btn btn-sm btn-secondary">Transportes</a>
+    <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">Editar</a>
   </div>
 </div>
 
@@ -254,18 +254,18 @@
 <!-- Filtros -->
 <div class="filter-bar">
   <button class="filter-btn active" data-filtro="__todos__" onclick="filtrar(this)">
-    🎭 Todos ({{ xeques | length + membros | length }})
+    Todos <strong>({{ xeques | length + membros | length }})</strong>
   </button>
   {% for op in opcoes %}
   <button class="filter-btn" data-filtro="{{ op }}" onclick="filtrar(this)">{{ op }}</button>
   {% endfor %}
-  <button class="filter-btn" data-filtro="__sem_resposta__" onclick="filtrar(this)">❌ Sem resposta</button>
+  <button class="filter-btn" data-filtro="__sem_resposta__" onclick="filtrar(this)">Sem resposta</button>
 </div>
 
 <!-- Xeques -->
 {% if xeques %}
 <div class="categoria-section">
-  <div class="categoria-title">👑 Xeques</div>
+  <div class="categoria-title">Xeques</div>
   <div>
     {% for elem in xeques %}
     {% set resps = resp_map.get(elem.id, []) %}
@@ -294,7 +294,7 @@
 <!-- Camelos + Ali-Bobós -->
 {% if membros %}
 <div class="categoria-section">
-  <div class="categoria-title">🐪 Camelos & Ali-Bobós</div>
+  <div class="categoria-title">Camelos & Ali-Bobós</div>
   {% for cat in ["Camelo", "Ali-Bobó"] %}
   {% set membros_cat = membros | selectattr('categoria', 'equalto', cat) | list %}
   {% if membros_cat %}

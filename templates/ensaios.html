@@ -75,7 +75,7 @@
 {% block content %}
 
 <div class="row" style="margin-bottom:1.5rem">
-  <h1 style="margin: 0;">✓ Ensaios</h1>
+  <h1 style="margin: 0;">Ensaios</h1>
   <div class="spacer"></div>
 </div>
 
@@ -110,7 +110,7 @@
     {% if current_role == 'admin' %}
     <form method="post" action="{{ url_for('del_ensaio', eid=ens.id) }}" onsubmit="return confirm('Tens a certeza que queres apagar este ensaio e todas as presenças registadas?')" style="display: inline;">
       <button class="btn btn-danger btn-sm" type="submit">
-        <span style="font-size: 16px;">🗑️</span>
+        Apagar
       </button>
     </form>
     {% endif %}
