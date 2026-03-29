@@ -34,15 +34,17 @@ html[data-theme="light"] {
   --info: #0969da;      /* info - same as accent */
   --info-dim: rgba(9,105,218,0.1);
   --card: #ffffff;
-  --green-bg: rgba(26,127,55,0.1);
+  --green-bg: #c6f6d5;
   --green: #1a7f37;
   --green-border: #26a641;
-  --red-bg: rgba(209,36,47,0.1);
+  --red-bg: #fecccc;
   --red: #d1242f;
   --red-border: #f85149;
   --blue-bg: rgba(9,105,218,0.1);
   --blue: #0969da;
   --amber-border: #9e6a03;
+  --amber-bg: #fde5b0;
+  --amber: #9e6a03;
 }
 
 /* ─────── DARK MODE ─────── */
@@ -70,15 +72,17 @@ html[data-theme="dark"] {
   --info: #58a6ff;      /* info - same as accent */
   --info-dim: rgba(88,166,255,0.15);
   --card: #0d1117;
-  --green-bg: rgba(63,185,80,0.15);
+  --green-bg: rgba(63,185,80,0.3);
   --green: #3fb950;
   --green-border: #238636;
-  --red-bg: rgba(248,81,73,0.15);
+  --red-bg: rgba(248,81,73,0.3);
   --red: #f85149;
   --red-border: #da3633;
   --blue-bg: rgba(88,166,255,0.15);
   --blue: #58a6ff;
   --amber-border: #d29922;
+  --amber-bg: rgba(210,153,34,0.3);
+  --amber: #d29922;
 }
 
 /* ─────── UNIVERSAL STYLES ─────── */
@@ -312,9 +316,13 @@ textarea { min-height: 120px; resize: vertical; }
   letter-spacing: 0.2px;
 }
 
-.badge-sim { background: var(--success-dim); color: var(--success); }
-.badge-nao { background: var(--danger-dim); color: var(--danger); }
-.badge-talvez { background: var(--warning-dim); color: var(--warning); }
+.badge-sim { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); border-radius: 20px; }
+.badge-nao { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); border-radius: 20px; }
+.badge-talvez { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber); border-radius: 20px; }
+.badge-ahoras { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); border-radius: 20px; }
+.badge-atrasado { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber); border-radius: 20px; }
+.badge-naoveio { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); border-radius: 20px; }
+.badge-semregisto { background: var(--border); color: var(--text3); border: 1px solid var(--border); border-radius: 20px; }
 
 .flash {
   background: var(--info-dim);

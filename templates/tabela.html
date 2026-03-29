@@ -155,7 +155,7 @@
 
 .resposta-badge {
   padding: 5px 12px;
-  border-radius: 16px;
+  border-radius: 24px;
   font-size: 12px;
   font-weight: 700;
   background: var(--accent-dim);
@@ -165,9 +165,31 @@
   letter-spacing: 0.2px;
 }
 
+.resposta-badge.badge-sim {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green);
+  min-width: auto;
+}
+
+.resposta-badge.badge-nao {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red);
+  min-width: auto;
+}
+
+.resposta-badge.badge-talvez {
+  background: var(--amber-bg);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  min-width: auto;
+}
+
 .resposta-badge.none {
   background: var(--border);
   color: var(--text3);
+  min-width: auto;
 }
 
 .cat-header.hidden {
