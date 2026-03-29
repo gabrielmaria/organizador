@@ -2,75 +2,72 @@
 {% block title %}Tabela — {{ ev.nome }}{% endblock %}
 {% block head %}
 <style>
-.filter-bar { display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem }
-.filter-btn {
-  padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;
-  cursor:pointer;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);
-  transition:.15s;-webkit-tap-highlight-color:transparent;
-}
-.filter-btn:hover { background:var(--bg) }
-.filter-btn.active { background:var(--blue);color:#fff;border-color:var(--blue) }
-.membro-row.hidden { display:none }
+.totais-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:.5rem;margin-bottom:1.25rem}
+.total-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:.75rem;text-align:center}
+.total-num{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
+.total-label{font-size:11px}
+
+.filter-bar{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-btn{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--card2);color:var(--text2);transition:.15s}
+.filter-btn:hover{border-color:var(--border2);color:var(--text)}
+.filter-btn.active{background:var(--accent);color:#0f0f11;border-color:var(--accent);font-weight:600}
+
+.membro-row{display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.65rem .875rem;border-bottom:1px solid var(--border)}
+.membro-row:last-child{border-bottom:none}
+
+.cat-header{padding:.35rem .875rem;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;background:var(--bg3);border-radius:6px;margin:.25rem 0}
 </style>
 {% endblock %}
 {% block content %}
 
-<div class="row" style="margin-bottom:1rem">
+<div class="row" style="margin-bottom:1.25rem">
   <div style="flex:1;min-width:0">
-    <h1 style="font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.nome }}</h1>
-    <span class="muted">{{ ev.criado }}</span>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:20px;line-height:1.2">{{ ev.nome }}</h1>
+    <span class="muted" style="font-size:11px">{{ ev.criado }}</span>
   </div>
-  <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm">🎸 Instrumentos</a>
-  <a href="{{ url_for('evento_transportes', eid=ev.id) }}" class="btn btn-sm">🚗 Transportes</a>
-  <a href="{{ url_for('evento', eid=ev.id) }}" class="btn btn-sm">✏️ Editar</a>
+  <a href="{{ url_for('evento_instrumentos', eid=ev.id) }}" class="btn btn-sm">🎸</a>
+  <a href="{{ url_for('evento', eid=ev.id) }}"             class="btn btn-sm">✏️</a>
 </div>
 
 <!-- Totais -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:.5rem;margin-bottom:1rem">
+<div class="totais-grid">
   {% for op, total in totais.items() %}
-  {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
-  <div class="card" style="padding:.75rem;text-align:center;margin:0">
-    <div style="font-size:26px;font-weight:700">{{ total }}</div>
-    <div class="badge badge-{{ slug }}" style="margin-top:4px">{{ op }}</div>
+  {% set slug = op|lower|replace(' ','')|replace('ã','a')|replace('é','e')|replace('á','a') %}
+  <div class="total-card">
+    <div class="total-num">{{ total }}</div>
+    <div><span class="badge badge-{{ slug }}">{{ op }}</span></div>
   </div>
   {% endfor %}
-  <div class="card" style="padding:.75rem;text-align:center;margin:0">
-    <div style="font-size:26px;font-weight:700;color:var(--text3)">{{ sem_resp }}</div>
-    <div class="muted" style="margin-top:4px">sem resposta</div>
+  <div class="total-card">
+    <div class="total-num" style="color:var(--text3)">{{ sem_resp }}</div>
+    <div class="muted" style="font-size:11px;margin-top:2px">sem resp.</div>
   </div>
 </div>
 
 <!-- Filtros -->
 <div class="filter-bar">
-  <button class="filter-btn active" data-filtro="__todos__" onclick="filtrar(this)">Todos</button>
+  <button class="filter-btn active" data-filtro="__todos__"       onclick="filtrar(this)">Todos</button>
   {% for op in opcoes %}
-  <button class="filter-btn" data-filtro="{{ op }}" onclick="filtrar(this)">{{ op }}</button>
+  <button class="filter-btn"        data-filtro="{{ op }}"        onclick="filtrar(this)">{{ op }}</button>
   {% endfor %}
-  <button class="filter-btn" data-filtro="__sem_resposta__" onclick="filtrar(this)">Sem resposta</button>
+  <button class="filter-btn"        data-filtro="__sem_resposta__" onclick="filtrar(this)">Sem resposta</button>
 </div>
 
 <!-- Xeques -->
 {% if xeques %}
-<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Xeques</div>
-<div class="card" style="padding:.5rem;margin-bottom:1rem">
+<div class="section-label">Xeques</div>
+<div class="card card-sm" style="margin-bottom:1rem">
   {% for elem in xeques %}
   {% set resps = resp_map.get(elem.id, []) %}
-  <div class="membro-row"
-       data-opcoes="{{ resps | join('|||') }}"
-       data-sem="{{ 'true' if not resps else 'false' }}"
-       style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %}">
-    <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:flex-end">
+  <div class="membro-row" data-opcoes="{{ resps|join('|||') }}" data-sem="{{ 'true' if not resps else 'false' }}">
+    <span style="flex:1;font-weight:500;font-size:14px">{{ elem.nome }}</span>
+    <div style="display:flex;flex-wrap:wrap;gap:3px">
       {% if resps %}
-        {% for op in opcoes %}
-          {% if op in resps %}
-          {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
-          <span class="badge badge-{{ slug }}">{{ op }}</span>
-          {% endif %}
-        {% endfor %}
-      {% else %}
-        <span class="badge badge-none">—</span>
-      {% endif %}
+        {% for op in opcoes %}{% if op in resps %}
+        {% set slug = op|lower|replace(' ','')|replace('ã','a')|replace('é','e')|replace('á','a') %}
+        <span class="badge badge-{{ slug }}">{{ op }}</span>
+        {% endif %}{% endfor %}
+      {% else %}<span class="badge badge-none">—</span>{% endif %}
     </div>
   </div>
   {% endfor %}
@@ -79,32 +76,23 @@
 
 <!-- Camelos + Ali-Bobós -->
 {% if membros %}
-<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">Camelos &amp; Ali-Bobós</div>
-<div class="card" style="padding:.5rem">
+<div class="section-label">Camelos & Ali-Bobós</div>
+<div class="card card-sm">
   {% for cat in ["Camelo", "Ali-Bobó"] %}
-  {% set membros_cat = membros | selectattr('categoria', 'equalto', cat) | list %}
+  {% set membros_cat = membros|selectattr('categoria','equalto',cat)|list %}
   {% if membros_cat %}
-  <div class="cat-header" style="padding:.4rem .75rem;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);border-radius:6px;margin:.25rem 0">
-    {{ cat }}s
-  </div>
+  <div class="cat-header">{{ cat }}s</div>
   {% for elem in membros_cat %}
   {% set resps = resp_map.get(elem.id, []) %}
-  <div class="membro-row"
-       data-opcoes="{{ resps | join('|||') }}"
-       data-sem="{{ 'true' if not resps else 'false' }}"
-       style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:.7rem .75rem;border-bottom:1px solid var(--border)">
-    <span style="flex:1;font-weight:500;min-width:100px">{{ elem.nome }}</span>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:flex-end">
+  <div class="membro-row" data-opcoes="{{ resps|join('|||') }}" data-sem="{{ 'true' if not resps else 'false' }}">
+    <span style="flex:1;font-weight:500;font-size:14px">{{ elem.nome }}</span>
+    <div style="display:flex;flex-wrap:wrap;gap:3px">
       {% if resps %}
-        {% for op in opcoes %}
-          {% if op in resps %}
-          {% set slug = op | lower | replace(' ','') | replace('ã','a') | replace('é','e') | replace('á','a') %}
-          <span class="badge badge-{{ slug }}">{{ op }}</span>
-          {% endif %}
-        {% endfor %}
-      {% else %}
-        <span class="badge badge-none">—</span>
-      {% endif %}
+        {% for op in opcoes %}{% if op in resps %}
+        {% set slug = op|lower|replace(' ','')|replace('ã','a')|replace('é','e')|replace('á','a') %}
+        <span class="badge badge-{{ slug }}">{{ op }}</span>
+        {% endif %}{% endfor %}
+      {% else %}<span class="badge badge-none">—</span>{% endif %}
     </div>
   </div>
   {% endfor %}
@@ -114,30 +102,24 @@
 {% endif %}
 
 <script>
-function filtrar(btn) {
-  var opcao = btn.dataset.filtro;
-  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+function filtrar(btn){
+  var opcao=btn.dataset.filtro;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active')});
   btn.classList.add('active');
-  document.querySelectorAll('.membro-row').forEach(function(row) {
+  document.querySelectorAll('.membro-row').forEach(function(row){
     var mostrar;
-    if (opcao === '__todos__') {
-      mostrar = true;
-    } else if (opcao === '__sem_resposta__') {
-      mostrar = row.dataset.sem === 'true';
-    } else {
-      var opcoes = row.dataset.opcoes.split('|||').map(function(s) { return s.trim(); }).filter(Boolean);
-      mostrar = opcoes.indexOf(opcao.trim()) !== -1;
-    }
-    row.style.display = mostrar ? 'flex' : 'none';
+    if(opcao==='__todos__'){mostrar=true}
+    else if(opcao==='__sem_resposta__'){mostrar=row.dataset.sem==='true'}
+    else{var ops=row.dataset.opcoes.split('|||').map(function(s){return s.trim()}).filter(Boolean);mostrar=ops.indexOf(opcao.trim())!==-1}
+    row.style.display=mostrar?'flex':'none';
   });
-  document.querySelectorAll('.cat-header').forEach(function(header) {
-    var next = header.nextElementSibling;
-    var temVisiveis = false;
-    while (next && !next.classList.contains('cat-header')) {
-      if (next.classList.contains('membro-row') && next.style.display !== 'none') { temVisiveis = true; break; }
-      next = next.nextElementSibling;
+  document.querySelectorAll('.cat-header').forEach(function(h){
+    var next=h.nextElementSibling,vis=false;
+    while(next&&!next.classList.contains('cat-header')){
+      if(next.classList.contains('membro-row')&&next.style.display!=='none'){vis=true;break}
+      next=next.nextElementSibling;
     }
-    header.style.display = temVisiveis ? '' : 'none';
+    h.style.display=vis?'':'none';
   });
 }
 </script>
