@@ -2,82 +2,79 @@
 {% block title %}{{ elem.nome }} — Stats{% endblock %}
 {% block head %}
 <style>
-.ring-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:1.25rem}
-.ring-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem;text-align:center}
-.ring-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
-.ring-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.ring-container { display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.25rem }
+.ring-card{
+  flex:1;min-width:110px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:1rem;text-align:center;
+}
+.ring-svg    { display:block;margin:0 auto .5rem }
+.ring-label  { font-size:12px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.5px }
+.ring-sub    { font-size:11px;color:var(--text3);margin-top:2px }
 
-.tab-btns{display:flex;gap:.4rem;margin-bottom:.875rem}
-.tab-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--card2);color:var(--text2);transition:.15s}
-.tab-btn.active{background:var(--accent);color:#0f0f11;border-color:var(--accent);font-weight:600}
-.tab-pane{display:none}
-.tab-pane.active{display:block}
-
-.hist-row{display:flex;align-items:center;padding:.6rem .875rem;border-bottom:1px solid var(--border);font-size:13px}
-.hist-row:last-child{border-bottom:none}
+.hist-item{
+  display:flex;align-items:center;padding:.65rem .75rem;
+  border-bottom:1px solid var(--border);font-size:14px;
+}
+.hist-item:last-child { border-bottom:none }
+.hist-nome { flex:1;color:var(--text2) }
 </style>
 {% endblock %}
 {% block content %}
 
 <div class="row" style="margin-bottom:1.25rem">
   <div style="flex:1">
-    <h1 style="font-family:'DM Serif Display',serif;font-size:24px">{{ elem.nome }}</h1>
-    <div style="font-size:12px;color:var(--text3)">{{ elem.categoria }}{% if elem.instrumento %} · {{ elem.instrumento }}{% endif %}</div>
+    <h1 style="font-size:20px;font-weight:700">{{ elem.nome }}</h1>
+    <span class="muted">{{ elem.categoria }}</span>
   </div>
   <a href="{{ url_for('estatisticas') }}" class="btn btn-sm">← Stats</a>
 </div>
 
-<!-- Rings -->
-<div class="ring-grid">
-  {% macro ring(pct, cor, label, sub) %}
-  <div class="ring-card">
-    <svg width="72" height="72" viewBox="0 0 72 72" style="display:block;margin:0 auto .5rem">
-      <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
-      <circle cx="36" cy="36" r="28" fill="none" stroke="{{ cor }}" stroke-width="7"
-              stroke-dasharray="{{ (pct/100*175.9)|round(1) }} 175.9"
-              stroke-dashoffset="44" stroke-linecap="round"
-              transform="rotate(-90 36 36)"/>
-      <text x="36" y="41" text-anchor="middle" font-size="15" font-weight="700" fill="{{ cor }}" font-family="DM Sans,sans-serif">{{ pct }}%</text>
-    </svg>
-    <div class="ring-label">{{ label }}</div>
-    <div class="ring-sub">{{ sub }}</div>
-  </div>
-  {% endmacro %}
-  {{ ring(pct_presenca, 'var(--green)',  'Presença', n_presente~'/'~total_ensaios~' ensaios') }}
-  {{ ring(pct_ahoras,   'var(--green)',  'A horas',  n_a_horas~' '~('vez' if n_a_horas==1 else 'vezes')) }}
-  {{ ring(pct_atraso,   'var(--amber)',  'Atrasos',  n_atrasado~' '~('vez' if n_atrasado==1 else 'vezes')) }}
-  {{ ring(pct_falta,    'var(--red)',    'Faltas',   n_nao_veio~' '~('vez' if n_nao_veio==1 else 'vezes')) }}
+{% macro ring(pct, color, label, sub) %}
+<div class="ring-card">
+  <svg class="ring-svg" width="76" height="76" viewBox="0 0 76 76">
+    <circle cx="38" cy="38" r="30" fill="none" stroke="var(--bg)" stroke-width="8"/>
+    <circle cx="38" cy="38" r="30" fill="none" stroke="{{ color }}" stroke-width="8"
+            stroke-dasharray="{{ (pct / 100 * 188.5) | round(1) }} 188.5"
+            stroke-dashoffset="47.12" stroke-linecap="round"
+            transform="rotate(-90 38 38)"/>
+    <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">{{ pct }}%</text>
+  </svg>
+  <div class="ring-label">{{ label }}</div>
+  <div class="ring-sub">{{ sub }}</div>
+</div>
+{% endmacro %}
+
+<div class="ring-container">
+  {{ ring(pct_presenca, 'var(--green-border)', 'Presença', n_presente ~ '/' ~ total_ensaios ~ ' ensaios') }}
+  {{ ring(pct_ahoras,   'var(--green-border)', 'A horas',  n_a_horas ~ ' vez' ~ ('es' if n_a_horas != 1 else '')) }}
+  {{ ring(pct_atraso,   'var(--amber-border)', 'Atrasos',  n_atrasado ~ ' vez' ~ ('es' if n_atrasado != 1 else '')) }}
+  {{ ring(pct_falta,    'var(--red-border)',   'Faltas',   n_nao_veio ~ ' vez' ~ ('es' if n_nao_veio != 1 else '')) }}
 </div>
 
-<!-- Tabs -->
-<div class="tab-btns">
-  <button class="tab-btn active" onclick="showTab('ensaios',this)">🎼 Ensaios</button>
+<!-- Histórico ensaios -->
+<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem;padding:0 .25rem">
+  Histórico de ensaios
 </div>
-
-<div class="tab-pane active" id="tab-ensaios">
-  <div class="card card-sm">
-    {% for item in hist_ensaios %}
-    {% set p = item.presc %}
-    {% set estado = p.get('estado','sem-registo') if p else 'sem-registo' %}
-    <div class="hist-row">
-      <span style="flex:1;color:var(--text2)">{{ item.titulo }}</span>
-      {% if estado=='a-horas' %}<span class="badge badge-ahoras">✓ A horas</span>
-      {% elif estado=='atrasado' %}<span class="badge badge-atrasado">⏱ Atrasado</span>
-      {% elif estado=='nao-veio' %}<span class="badge badge-naoveio">✗ Não veio</span>
-      {% else %}<span class="badge badge-none">—</span>{% endif %}
-    </div>
+<div class="card" style="padding:.5rem">
+  {% for item in hist_ensaios %}
+  {% set p      = item.presc %}
+  {% set estado = p.get('estado','sem-registo') if p else 'sem-registo' %}
+  <div class="hist-item">
+    <span class="hist-nome">{{ item.titulo }}</span>
+    {% if estado == 'a-horas' %}
+      <span class="badge badge-ahoras">✓ A horas</span>
+    {% elif estado == 'atrasado' %}
+      <span class="badge badge-atrasado">⏱ Atrasado</span>
+    {% elif estado == 'nao-veio' %}
+      <span class="badge badge-naoveio">✗ Não veio</span>
     {% else %}
-    <div style="padding:2rem;text-align:center;color:var(--text3)">Nenhum ensaio ainda.</div>
-    {% endfor %}
+      <span class="badge badge-semregisto">—</span>
+    {% endif %}
   </div>
+  {% else %}
+  <div style="padding:2rem;text-align:center;color:var(--text3)">Nenhum ensaio registado ainda.</div>
+  {% endfor %}
 </div>
 
-<script>
-function showTab(id,btn){
-  document.querySelectorAll('.tab-pane').forEach(function(t){t.classList.remove('active')});
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
-  document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
-}
-</script>
 {% endblock %}
